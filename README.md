@@ -9,7 +9,10 @@ Note: A second type of file, KV2 files, which are compressed and optionally encr
 
 Note: When describing syntax, parenthesis will indicate optional components, and angled brackets will indicate parameter names that must be replaced with their actual values. Literal angle brackets will be escaped with a backslash.
 
-## How it works:
+## Using KV Files in your Programs:
+You have multiple options for integrating KV support into your programs. 
+
+## How it Works - Internal Structure:
 Every KV file consists of these elements:
   * Version statements
   * Header statements
