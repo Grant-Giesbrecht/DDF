@@ -69,7 +69,7 @@ typedef struct{
 
 	std::string name;
 	char type;
-	std::string description;
+	std::string description; //TODO: Add code to verify desc doesn't contain newline when added by user
 }KVFlatItem;
 
 typedef struct{
@@ -159,8 +159,13 @@ private:
 	std::vector<KV2DItem> variables2D;
 
 	void initialize();
+
 	bool isValidName(std::string name);
 	bool nameInUse(std::string name);
+
+	void sortMatrices();
+	size_t matrixLength(KV1DItem m);
+	size_t matrixLength(KV2DItem m);
 
 	std::string header;
 
@@ -351,13 +356,15 @@ void KVFile::add(std::vector<std::vector<bool> > newVar, std::string varName, st
 /*
 Writes the currently loaded variables to a KV file on disk.
 
-Options:
+Options: (Order does not matter. Case-sensitive)
 	v: Save all matrices as vertical
 	o: Optimize size by removing lines intended to improve human-readability.
 	d: Decapitate - ie. omit header
 	-: Do not print version statement. WARNING: This will make the file unreadable.
 		Don't use it unless you know what you're doing.
 	;: Terminate variable statements with the optional semicolon
+	s: Sort vectors largest to smallest
+	u: Undocumented - variable descriptions are not printed
 
 In the event of an error, it returns a blank string.
 */
@@ -370,6 +377,8 @@ std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Im
 	bool decapitate = false;
 	bool skip_version = false;
 	std::string term_char = "";
+	bool sort_mats = false;
+	bool show_descriptions = true;
 
 	//Read in options
 	if (options.find("v", 0) != std::string::npos){
@@ -386,6 +395,12 @@ std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Im
 	}
 	if (options.find(";", 0) != std::string::npos){
 		term_char = ";";
+	}
+	if (options.find("s", 0) != std::string::npos){
+		sort_mats = true;
+	}
+	if (options.find("u", 0) != std::string::npos){
+		show_descriptions = false;
 	}
 
 	//********************** Write version statement *************************//
@@ -404,22 +419,170 @@ std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Im
 	//For each variable...
 	for (size_t i = 0 ; i < variablesFlat.size() ; i++){
 
-		//Write type
+		//Write type, name, value
 		switch(variablesFlat[i].type){
 			case('d'):
-				kvf = kvf + "d " + variablesFlat[i].name + " " + to_gstring(variablesFlat[i].d) + term_char + "\n";
+				kvf = kvf + "d " + variablesFlat[i].name + " " + to_gstring(variablesFlat[i].d) + term_char; //Add variable
+				if (variablesFlat[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variablesFlat[i].description; //Add description if applicable
+				kvf = kvf + "\n"; //Add newline
 				break;
 			case('b'):
-				kvf = kvf + "b " + variablesFlat[i].name + " " + bool_to_string(variablesFlat[i].b) + term_char + "\n";
+				kvf = kvf + "b " + variablesFlat[i].name + " " + bool_to_string(variablesFlat[i].b) + term_char;  //Add variable
+				if (variablesFlat[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variablesFlat[i].description; //Add description if applicable
+				kvf = kvf + "\n"; //Add newline
 				break;
 			case('s'):
-				kvf = kvf + "m " + variablesFlat[i].name + " " + variablesFlat[i].s + term_char + "\n";
+				kvf = kvf + "s " + variablesFlat[i].name + " \"" + variablesFlat[i].s + "\"" + term_char;  //Add variable
+				if (variablesFlat[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variablesFlat[i].description; //Add description if applicable
+				kvf = kvf + "\n"; //Add newline
 				break;
 			default:
 				return ""; //An error occured
 		}
 
 	}
+
+	//Sort matrices if requested or requried (required for vertical writing)
+	if (sort_mats || vertical_mode) sortMatrices();
+
+	if (vertical_mode){
+
+	}else{
+
+		//********************** Write 1D Variables - Horizontal ****************************//
+
+		//For each variable...
+		for (size_t i = 0 ; i < variables1D.size() ; i++){
+
+			switch(variables1D[i].type){
+				case('d'):
+
+					//print type, name, open brackets
+					kvf = kvf + "m<d> " + variables1D[i].name + " [";
+
+					//For each element...
+					for (size_t k = 0 ; k < variables1D[i].md.size() ; k++){
+						if (k != 0) kvf = kvf + ", "; //Add comma if not first element
+						kvf = kvf + to_gstring(variables1D[i].md[k]); //Add variable string
+					}
+
+					kvf = kvf + "]" + term_char;  //Add termination
+					if (variables1D[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variables1D[i].description; //Add description if applicable
+					kvf = kvf + "\n"; //Add newline
+					break;
+				case('b'):
+
+					//print type, name, open brackets
+					kvf = kvf + "m<b> " + variables1D[i].name + " [";
+
+					//For each element...
+					for (size_t k = 0 ; k < variables1D[i].mb.size() ; k++){
+						if (k != 0) kvf = kvf + ", "; //Add comma if not first element
+						kvf = kvf + bool_to_string(variables1D[i].mb[k]); //Add variable string
+					}
+
+					kvf = kvf + "]" + term_char;  //Add termination
+					if (variables1D[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variables1D[i].description; //Add description if applicable
+					kvf = kvf + "\n"; //Add newline
+					break;
+				case('s'):
+
+					//print type, name, open brackets
+					kvf = kvf + "m<s> " + variables1D[i].name + " [";
+
+					//For each element...
+					for (size_t k = 0 ; k < variables1D[i].ms.size() ; k++){
+						if (k != 0) kvf = kvf + ", "; //Add comma if not first element
+						kvf = kvf + "\"" + variables1D[i].ms[k] + "\""; //Add variable string
+					}
+
+					kvf = kvf + "]" + term_char;  //Add termination
+					if (variables1D[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variables1D[i].description; //Add description if applicable
+					kvf = kvf + "\n"; //Add newline
+					break;
+
+				default:
+					return ""; //An error occured
+			}
+		}
+
+		//********************** Write 2D Variables - Horizontal ****************************//
+
+		//For each variable...
+		for (size_t i = 0 ; i < variables2D.size() ; i++){
+
+			switch(variables2D[i].type){
+				case('d'):
+
+					//print type, name, open brackets
+					kvf = kvf + "m<d> " + variables2D[i].name + " [";
+
+					//For each row...
+					for (size_t k = 0 ; k < variables2D[i].md2.size() ; k++){
+
+						if (k != 0) kvf = kvf + "; "; //Add semicolon if not first row
+
+						//Write row
+						for (size_t j = 0 ; j < variables2D[i].md2[k].size() ; j++){ //For each element...
+							if (j != 0) kvf = kvf + ", "; //Add comma if not first element
+							kvf = kvf + to_gstring(variables2D[i].md2[k][j]); //Add variable string
+						}
+					}
+
+					kvf = kvf + "]" + term_char;  //Add termination
+					if (variables2D[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variables2D[i].description; //Add description if applicable
+					kvf = kvf + "\n"; //Add newline
+					break;
+				case('b'):
+
+					//print type, name, open brackets
+					kvf = kvf + "m<b> " + variables2D[i].name + " [";
+
+					//For each row...
+					for (size_t k = 0 ; k < variables2D[i].mb2.size() ; k++){
+
+						if (k != 0) kvf = kvf + "; "; //Add semicolon if not first row
+
+						//Write row
+						for (size_t j = 0 ; j < variables2D[i].mb2[k].size() ; j++){ //For each element...
+							if (j != 0) kvf = kvf + ", "; //Add comma if not first element
+							kvf = kvf + bool_to_string(variables2D[i].mb2[k][j]); //Add variable string
+						}
+					}
+
+					kvf = kvf + "]" + term_char;  //Add termination
+					if (variables2D[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variables2D[i].description; //Add description if applicable
+					kvf = kvf + "\n"; //Add newline
+					break;
+				case('s'):
+
+					//print type, name, open brackets
+					kvf = kvf + "m<s> " + variables2D[i].name + " [";
+
+					//For each row...
+					for (size_t k = 0 ; k < variables2D[i].ms2.size() ; k++){
+
+						if (k != 0) kvf = kvf + "; "; //Add semicolon if not first row
+
+						//Write row
+						for (size_t j = 0 ; j < variables2D[i].ms2[k].size() ; j++){ //For each element...
+							if (j != 0) kvf = kvf + ", "; //Add comma if not first element
+							kvf = kvf + "\"" + variables2D[i].ms2[k][j] + "\""; //Add variable string
+						}
+					}
+
+					kvf = kvf + "]" + term_char;  //Add termination
+					if (variables2D[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variables2D[i].description; //Add description if applicable
+					kvf = kvf + "\n"; //Add newline
+					break;
+				default:
+					return ""; //An error occured
+			}
+		}
+
+	}
+
+
 
 	return kvf;
 }
@@ -571,6 +734,10 @@ std::vector<std::string> KVFile::names(std::string options){
 
 }
 
+//***************************************************************************//
+//**			PRIVATE FUNCTION DEFINITIONS							   **//
+//***************************************************************************//
+
 /*
 Verifies that the proposed variable name is a valid variable name.
 
@@ -622,6 +789,140 @@ bool KVFile::nameInUse(std::string name){
 
 	return false;
 }
+
+/*
+Sorts the 1D and 2D matrices from largest to smallest.
+*/
+void KVFile::sortMatrices(){
+
+	//Sort 1D vector
+	for (size_t i = 1 ; i < variables1D.size() ; i++){ //For each matrix (skipping first) ...
+
+		//Get length
+		size_t el = matrixLength(variables1D[i]);
+
+		size_t j = i-1; //Get position to compare against
+		while (el > matrixLength(variables1D[j])){ //Keep checking new indeces until you find a larger or equal size matrix
+
+			//The current matrix is larger than the previous matrix...
+
+			if (j > 0){ //If possible, move compare index closer to 0
+				j--;
+			}else{ //Else break - you're at the beginning
+				break;
+			}
+		}
+
+		//Move matrix if required
+		if (j+1 == i){
+			KV1DItem temp = variables1D[i]; //Make a copy of the current matrix
+
+			variables1D.erase(variables1D.begin() + i); 			//Erase at old location
+			variables1D.insert(variables1D.begin() + j+1, temp);	//Insert into new location
+		}
+
+	}
+
+	//Sort 2D vector
+	for (size_t i = 1 ; i < variables2D.size() ; i++){ //For each matrix (skipping first) ...
+
+		//Get length
+		size_t el = matrixLength(variables2D[i]);
+
+		size_t j = i-1; //Get position to compare against
+		while (el > matrixLength(variables2D[j])){ //Keep checking new indeces until you find a larger or equal size matrix
+
+			//The current matrix is larger than the previous matrix...
+
+			if (j > 0){ //If possible, move compare index closer to 0
+				j--;
+			}else{ //Else break - you're at the beginning
+				break;
+			}
+		}
+
+		//Move matrix if required
+		if (j+1 == i){
+			KV2DItem temp = variables2D[i]; //Make a copy of the current matrix
+
+			variables2D.erase(variables2D.begin() + i); 			//Erase at old location
+			variables2D.insert(variables2D.begin() + j+1, temp);	//Insert into new location
+		}
+
+	}
+
+}
+
+/*
+Calculates the total number of elements in the KVitem and returns it.
+*/
+size_t KVFile::matrixLength(KV1DItem m){
+
+	switch(m.type){
+		case('d'):
+			return m.md.size();
+			break;
+		case('s'):
+			return m.ms.size();
+			break;
+		case('b'):
+			return m.mb.size();
+			break;
+		default:
+			return 0;
+			break;
+	}
+}
+
+/*
+Calculates the total number of elements (in all rows and cols, combined) in the
+KVitem and returns it.
+*/
+size_t KVFile::matrixLength(KV2DItem m){
+
+	size_t l;
+
+	switch(m.type){
+		case('d'):
+
+			l = 0;
+			for (size_t j = 0 ; j < m.md2.size() ; j++){ //For each row...
+				l += m.md2[j].size(); //Get size, increment sum
+			}
+
+			return l; //Return sum
+
+			break;
+		case('s'):
+
+			l = 0;
+			for (size_t j = 0 ; j < m.ms2.size() ; j++){ //For each row...
+				l += m.ms2[j].size(); //Get size, increment sum
+			}
+
+			return l; //Return sum
+
+			break;
+		case('b'):
+
+			l = 0;
+			for (size_t j = 0 ; j < m.mb2.size() ; j++){ //For each row...
+				l += m.mb2[j].size(); //Get size, increment sum
+			}
+
+			return l; //Return sum
+
+			break;
+		default:
+			return 0;
+			break;
+	}
+
+}
+
+//***************************************************************************//
+//**			NON-CLASS FUNCTION DEFINITIONS							   **//
+//***************************************************************************//
 
 /*
 Converts a double to a string using 'g' formatting.
