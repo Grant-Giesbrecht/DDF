@@ -1,4 +1,4 @@
-#include <iostream>
+	#include <iostream>
 #include <stdio.h>
 #include <string>
 #include <vector>
@@ -22,6 +22,7 @@ int main(){
 	V2d.push_back(Vout); V2d.push_back(Vin);
 
 	KVFile kv;
+	kv.setHeader("This is a test file.\n\tI was written by a test program :)");
 	kv.add(x, "X");
 	kv.add(Vout, "Vout");
 	kv.add(Vin, "Vin");
@@ -29,7 +30,9 @@ int main(){
 
 	cout << "\nNo. Variables: " << to_string(kv.numVar()) << endl;
 	cout << "Variables:\n\t" << kv.names("mt")[0] << endl;
-	// kv.write("./calc_out.kv")
+
+	kv.write("../examples/cppkv_out.kv", ";o");
+
 	//
 	//
 	// kv.clread()
