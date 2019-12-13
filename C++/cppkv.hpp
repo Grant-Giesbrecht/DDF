@@ -7,6 +7,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include "KTable.hpp" //TODO: Change this to be separate library
 
 #define CURRENT_VERSION "2.0"
 
@@ -166,6 +167,14 @@ private:
 	void sortMatrices();
 	size_t matrixLength(KV1DItem m);
 	size_t matrixLength(KV2DItem m);
+
+	double linaccess(std::vector<std::vector<double> > m, size_t idx);
+	bool linaccess(std::vector<std::vector<bool> > m, size_t idx);
+	std::string linaccess(std::vector<std::vector<std::string> > m, size_t idx);
+
+	bool isRowEnd(KV2DItem m, size_t idx);
+
+	void init_ktable(KTable& kt);
 
 	std::string header;
 
@@ -446,6 +455,257 @@ std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Im
 	if (sort_mats || vertical_mode) sortMatrices();
 
 	if (vertical_mode){ //******************** Write matrices - Vertical Mode ***********//
+
+		//TODO: Optimized veritcal mode not using KTable, instead using spaces
+
+		{
+			//************************ 1D ******************************
+
+			//Start vertical block
+			kvf = kvf + "#VERTICAL\n";
+			if (!optimize) kvf = kvf + "\n";
+
+			//To keep everything aligned, use KTable
+			KTable kt;
+
+			//Write types
+			//
+			std::vector<std::string> trow;
+			for (size_t i = 0 ; i < variables1D.size() ; i++){
+				switch(variables1D[i].type){
+					case('d'):
+						trow.push_back("m<d>");
+						break;
+					case('b'):
+						trow.push_back("m<b>");
+						break;
+					case('s'):
+						trow.push_back("m<s>");
+						break;
+					default:
+						return ""; //An error occured
+				}
+			}
+			//
+			kt.row(trow);
+
+			//Write names
+			//
+			trow.clear();
+			for (size_t i = 0 ; i < variables1D.size() ; i++){
+				trow.push_back(variables1D[i].name);
+			}
+			//
+			kt.row(trow);
+
+
+
+			//Write descriptions
+			//
+			if (show_descriptions){
+
+				trow.clear();
+
+				bool all_descr_blank = true; //Will let code skip description if all blank
+
+				trow.clear();
+				for (size_t i = 0 ; i < variables1D.size() ; i++){ //Get descr for 1D vars
+
+					if (variables1D[i].description.find("?", 0) != std::string::npos){ //Skip desc if it contains key symbol '?''
+						trow.push_back("?");
+					}else{
+						trow.push_back("?" + variables1D[i].description); //Else print desc
+						all_descr_blank = false;
+					}
+
+				}
+
+				if (!all_descr_blank) kt.row(trow);
+
+			}
+
+			//Write data lines
+			//
+			bool still_printing;
+			size_t row = 0;
+			do{ //While any matrix still has data to print...
+
+				trow.clear();
+
+				still_printing = false;
+
+				for (size_t i = 0 ; i < variables1D.size() ; i++){ //For each 1D matrix...
+
+					switch(variables1D[i].type){ //Find out its type...
+						case('d'):
+							if (row < variables1D[i].md.size()){ //See if it has data to print...
+								still_printing  = true; //Set printing to true
+								trow.push_back(to_gstring(variables1D[i].md[row])); //Add its data point
+							}
+							break;
+						case('b'):
+							if (row < variables1D[i].mb.size()){ //See if it has data to print...
+								still_printing  = true; //Set printing to true
+								trow.push_back(bool_to_string(variables1D[i].mb[row])); //Add its data point
+							}
+							break;
+						case('s'):
+							if (row < variables1D[i].ms.size()){ //See if it has data to print...
+								still_printing  = true; //Set printing to true
+								trow.push_back("\"" + variables1D[i].ms[row] + "\""); //Add its data point
+							}
+							break;
+					}
+
+				}
+
+				kt.row(trow);
+
+				row++;
+
+			}while(still_printing);
+
+
+
+
+			init_ktable(kt); //TODO: Alignment is wrong if this is NOT caleld at end. Put's left align columns right aligned.
+
+
+			//Add table's string as vertical matrix statement
+			kvf = kvf + kt.str();
+
+
+			//End vertical block
+			if (!optimize) kvf = kvf + "\n";
+			kvf = kvf + "#VERTICAL\n";
+		}
+
+		{
+			//******************************** 2D ******************************
+
+			//Start vertical block
+			if (!optimize) kvf = kvf + "\n";
+			kvf = kvf + "#VERTICAL\n";
+			if (!optimize) kvf = kvf + "\n";
+
+			//To keep everything aligned, use KTable
+			KTable kt;
+
+			//Write types
+			//
+			std::vector<std::string> trow;
+			for (size_t i = 0 ; i < variables2D.size() ; i++){
+				switch(variables2D[i].type){
+					case('d'):
+						trow.push_back("m<d>");
+						break;
+					case('b'):
+						trow.push_back("m<b>");
+						break;
+					case('s'):
+						trow.push_back("m<s>");
+						break;
+					default:
+						return ""; //An error occured
+				}
+			}
+			//
+			kt.row(trow);
+
+			//Write names
+			//
+			trow.clear();
+			for (size_t i = 0 ; i < variables2D.size() ; i++){
+				trow.push_back(variables2D[i].name);
+			}
+			//
+			kt.row(trow);
+
+			//Write descriptions
+			//
+			if (show_descriptions){
+
+				trow.clear();
+
+				bool all_descr_blank = true; //Will let code skip description if all blank
+
+				trow.clear();
+				for (size_t i = 0 ; i < variables2D.size() ; i++){ //Get descrs for 2D vars
+
+					if (variables2D[i].description.find("?", 0) != std::string::npos){ //Skip desc if it contains key symbol '?''
+						trow.push_back("?");
+					}else{
+						trow.push_back("?" + variables2D[i].description); //Else print desc
+						all_descr_blank = false;
+					}
+
+				}
+
+				if (!all_descr_blank) kt.row(trow);
+
+			}
+
+			//Write data lines
+			//
+			bool still_printing;
+			size_t row = 0;
+			do{ //While any matrix still has data to print...
+
+				trow.clear();
+
+				still_printing = false;
+				for (size_t i = 0 ; i < variables2D.size() ; i++){ //For each 2D variable
+
+					switch(variables2D[i].type){ //Find out its type...
+						case('d'):
+							if (row < matrixLength(variables2D[i])){ //See if it has data to print...
+								still_printing  = true; //Set printing to true
+								std::string tstr = to_gstring(linaccess(variables2D[i].md2, row));
+								if (isRowEnd(variables2D[i], row)) tstr = tstr + ";";
+								trow.push_back(tstr); //Add its data point
+
+							}
+							break;
+						case('b'):
+							if (row < matrixLength(variables2D[i])){ //See if it has data to print...
+								still_printing  = true; //Set printing to true
+								std::string tstr = bool_to_string(linaccess(variables2D[i].mb2, row));
+								if (isRowEnd(variables2D[i], row)) tstr = tstr + ";";
+								trow.push_back(tstr); //Add its data point
+							}
+							break;
+						case('s'):
+							if (row < matrixLength(variables2D[i])){ //See if it has data to print...
+								still_printing  = true; //Set printing to true
+								std::string tstr = "\"" + linaccess(variables2D[i].ms2, row) + "\"";
+								if (isRowEnd(variables2D[i], row)) tstr = tstr + ";";
+								trow.push_back(tstr); //Add its data point
+							}
+							break;
+					}
+				}
+
+				kt.row(trow);
+
+				row++;
+
+			}while(still_printing);
+
+
+
+
+			init_ktable(kt); //TODO: Alignment is wrong if this is NOT caleld at end. Put's left align columns right aligned.
+
+
+			//Add table's string as vertical matrix statement
+			kvf = kvf + kt.str();
+
+
+			//End vertical block
+			if (!optimize) kvf = kvf + "\n";
+			kvf = kvf + "#VERTICAL\n";
+		}
+
 
 	}else{ //******************** Write matrices - Horizontal Mode **********************//
 
@@ -917,6 +1177,136 @@ size_t KVFile::matrixLength(KV2DItem m){
 			return 0;
 			break;
 	}
+
+}
+
+/*
+Finds the 'idx'th variable in m, acting as if each lower row is appended to the
+end of the preceeding row. Makes 2D vector look 1D in terms of indexing.
+
+Returns 'idx'-th value in 'm'. Returns -1 if idx out of range.
+*/
+double KVFile::linaccess(std::vector<std::vector<double> > m, size_t idx){
+
+	size_t count = 0;
+
+	for (size_t r = 0 ; r < m.size() ; r++){
+		if (m[r].size() + count > idx){
+			return m[r][idx - count];
+		}else{
+			count += m[r].size();
+		}
+	}
+
+	return -1; //Default return if out of bounds
+}
+
+/*
+Finds the 'idx'th variable in m, acting as if each lower row is appended to the
+end of the preceeding row. Makes 2D vector look 1D in terms of indexing.
+
+Returns 'idx'-th value in 'm'. Returns false if idx out of range.
+*/
+bool KVFile::linaccess(std::vector<std::vector<bool> > m, size_t idx){
+
+	size_t count = 0;
+
+	for (size_t r = 0 ; r < m.size() ; r++){
+		if (m[r].size() + count > idx){
+			return m[r][idx - count];
+		}else{
+			count += m[r].size();
+		}
+	}
+
+	return ""; //Default false if out of bounds
+}
+
+/*
+Finds the 'idx'th variable in m, acting as if each lower row is appended to the
+end of the preceeding row. Makes 2D vector look 1D in terms of indexing.
+
+Returns 'idx'-th value in 'm'. Returns blank if idx out of range.
+*/
+std::string KVFile::linaccess(std::vector<std::vector<std::string> > m, size_t idx){
+
+	size_t count = 0;
+
+	for (size_t r = 0 ; r < m.size() ; r++){
+		if (m[r].size() + count > idx){
+			return m[r][idx - count];
+		}else{
+			count += m[r].size();
+		}
+	}
+
+	return ""; //Default return if out of bounds
+}
+
+/*
+Treats a 2D matrix as 1D, pretending each row is appended to the preceeding row.
+Returns true if the element at index 'idx' is actually the end of a row in the
+real 2D matrix.
+
+Also returns false if idx is out of bounds, or if any other error occurs.
+*/
+bool KVFile::isRowEnd(KV2DItem m, size_t idx){
+
+	size_t count = 0;
+
+	switch(m.type){
+		case('d'):
+			for (size_t r = 0 ; r < m.md2.size() ; r++){
+				if (m.md2[r].size() + count > idx){
+					return (idx == (count + m.md2[r].size()-1));
+				}else{
+					count += m.md2[r].size();
+				}
+			}
+			break;
+		case('b'):
+			for (size_t r = 0 ; r < m.mb2.size() ; r++){
+				if (m.mb2[r].size() + count > idx){
+					return (idx == (count + m.mb2[r].size()-1));
+				}else{
+					count += m.mb2[r].size();
+				}
+			}
+			break;
+		case('s'):
+			for (size_t r = 0 ; r < m.ms2.size() ; r++){
+				if (m.ms2[r].size() + count > idx){
+					return (idx == (count + m.ms2[r].size()-1));
+				}else{
+					count += m.ms2[r].size();
+				}
+			}
+			break;
+		default:
+			return false;
+	}
+
+	return false; //Default return if out of bounds
+
+}
+
+/*
+Initializes the KTable for use in generating vertical KV matrix statements.
+*/
+void KVFile::init_ktable(KTable& kt){
+
+	kt.table_title("");
+	kt.set(KTABLE_INTERWALLS, false);
+	kt.set(KTABLE_SIDEWALLS, false);
+	kt.set(KTABLE_TOPBOTTOMHBAR, false);
+	kt.set(KTABLE_HEADERINTERWALLS, false);
+	kt.set(KTABLE_HEADERHBAR, false);
+	kt.set(KTABLE_TITLEHBAR, false);
+	// kt.set(KTABLE_TITLEBAR, false); //TODO: KTable bug - if I turn title off, can't surpress preceeding ----s and on same line :\
+	// kt.set(KTABLE_INTERHBARS, false);
+	kt.alignh('l');
+	kt.alignc('l');
+	kt.alignt('l');
 
 }
 
