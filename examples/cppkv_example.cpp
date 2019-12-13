@@ -1,4 +1,4 @@
-	#include <iostream>
+#include <iostream>
 #include <stdio.h>
 #include <string>
 #include <vector>
@@ -31,7 +31,7 @@ int main(){
 	cout << "\nNo. Variables: " << to_string(kv.numVar()) << endl;
 	cout << "Variables:\n\t" << kv.names("mt")[0] << endl;
 
-	kv.write("../examples/cppkv_out.kv", ";o");
+	kv.write("../examples/cppkv_out.kv", ";");
 
 	//
 	//

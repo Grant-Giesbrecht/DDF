@@ -445,9 +445,9 @@ std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Im
 	//Sort matrices if requested or requried (required for vertical writing)
 	if (sort_mats || vertical_mode) sortMatrices();
 
-	if (vertical_mode){
+	if (vertical_mode){ //******************** Write matrices - Vertical Mode ***********//
 
-	}else{
+	}else{ //******************** Write matrices - Horizontal Mode **********************//
 
 		//********************** Write 1D Variables - Horizontal ****************************//
 
