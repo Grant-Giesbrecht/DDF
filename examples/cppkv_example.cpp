@@ -41,5 +41,12 @@ int main(){
 	cout << "\nNo. Variables: " << to_string(kv.numVar()) << endl;
 	cout << "Variables:\n\t" << kv.names("mt")[0] << endl;
 
+	kv.read("../examples/cppkv_out.kv");
+	cout << "Read file..." << endl;
+
+	cout << "\nVersion: " << kv.getVersion() << endl;
+	cout << "Header: " << kv.getHeader() << endl;
+
+
 	return 0;
 }

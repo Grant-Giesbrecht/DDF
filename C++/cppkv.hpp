@@ -10,7 +10,7 @@
 #include <gstd/gstd.hpp>
 #include <KTable/ktable.hpp>
 
-#define CURRENT_VERSION "2.0"
+#define CURRENT_VERSION 2.0
 
 std::string to_gstring(double x, size_t buf_size=30, size_t precision=6);
 std::string bool_to_string(bool b);
@@ -150,6 +150,8 @@ public:
 	void setHeader(std::string h);
 	std::string getHeader();
 
+	double getVersion();
+
 	//************** PRINTING
 
 	std::vector<std::string> names(std::string options="");
@@ -181,6 +183,8 @@ private:
 	std::string header;
 	double fileVersion; //version of read file
 
+	std::string err; //Error data string
+
 };
 
 //***************************************************************************//
@@ -209,7 +213,9 @@ KVFile::KVFile(std::string fileIn){
 Initialize the object
 */
 void KVFile::initialize(){
-	//Nothing to do here at the moment...
+
+	fileVersion = CURRENT_VERSION;
+
 }
 
 //***************************************************************************//
@@ -416,7 +422,7 @@ std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Im
 	}
 
 	//********************** Write version statement *************************//
-	kvf = kvf + "#VERSION " + std::string(CURRENT_VERSION) + "\n";
+	kvf = kvf + "#VERSION " + std::string(std::to_string(CURRENT_VERSION)) + "\n";
 	if (!optimize) kvf = kvf + "\n";
 
 	//*********************** Write header statement *************************//
@@ -922,7 +928,76 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 		return false;
 	}
 
+	std::string line;
+	std::vector<gstd::string_idx> words;
+	size_t lineNum = 0;
+	while (getline(file, line)){ //For each line in file...
 
+		lineNum++;
+
+		//Break line into words...
+		gstd::ensure_whitespace(line, ";"); //Ensure semicolons are picked up as tokens
+		words = gstd::parseIdx(line, " \t");
+
+		if (words.size() < 1) continue; //Skip blank lines
+
+		if (words[0].str == "#VERSION"){ //Version statement
+
+			//Ensure 2 words present
+			if (words.size() != 2){
+				err = "Failed on line " + std::to_string(lineNum) + ".\n\tVersion statement accepts exactly 2 words.";
+				return false;
+			}
+
+			//Read version statement
+			try{
+				fileVersion = std::stod(words[1].str);
+			}catch(...){
+				err = "Failed on line " + std::to_string(lineNum) + ".\n\tFailed to read version number.";
+				return false;
+			}
+
+		}else if(words[0].str == "#HEADER"){
+
+			header = ""; //Clear header
+			size_t openedOnLine = lineNum;
+
+			bool foundHeader = false;
+			while (getline(file, line)){ //Keep reading lines until closing header found
+
+				lineNum++;
+
+				//Break line into words...
+				gstd::ensure_whitespace(line, ";"); //Ensure semicolons are picked up as tokens
+				words = gstd::parseIdx(line, " \t");
+
+				if (words.size() < 1) continue; //Skip blank lines
+
+				if(words[0].str == "#HEADER"){ //Is a closing header statement
+					foundHeader = true;
+					break;
+				}else{ //Is part of the header...
+
+					if (header.length() == 0){
+						header = line;
+					}else{
+						header = header + "\n" + line;
+					}
+
+				}
+
+			}
+
+			//Ensure end of file was not reached before header found
+			if (!foundHeader){
+				err = "Failed on line " + std::to_string(openedOnLine) + ".\n\tFailed to find closing #HEADER statement.";
+			}
+
+		}
+
+
+
+	}
 
 	return true;
 }
@@ -976,6 +1051,13 @@ Returns the header
 */
 std::string KVFile::getHeader(){
 	return header;
+}
+
+/*
+Returns the file's verion.
+*/
+double KVFile::getVersion(){
+	return fileVersion;
 }
 
 //***************************************************************************//
