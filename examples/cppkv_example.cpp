@@ -4,8 +4,6 @@
 #include <vector>
 #include "../C++/cppkv.hpp"
 
-#include "../C++/KTable.hpp"
-
 using namespace std;
 
 int main(){

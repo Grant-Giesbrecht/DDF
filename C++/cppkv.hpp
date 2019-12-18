@@ -7,7 +7,8 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include "KTable.hpp" //TODO: Change this to be separate library
+#include <gstd/gstd.hpp>
+#include <KTable/ktable.hpp>
 
 #define CURRENT_VERSION "2.0"
 
@@ -921,7 +922,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 		return false;
 	}
 
-	std::cout << "in file" << std::endl;
+
 
 	return true;
 }
