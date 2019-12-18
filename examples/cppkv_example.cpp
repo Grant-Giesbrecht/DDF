@@ -25,7 +25,7 @@ int main(){
 
 	KVFile kv;
 	kv.setHeader("This is a test file.\n\tI was written by a test program :)");
-	kv.add(x, "X");
+	kv.add(x, "X", "I am a description");
 	kv.add(Vout, "Vout", "Output");
 	kv.add(Vin, "Vin", "eingang");
 	kv.add(V2d, "Vec_2D", "2D Matrix :)");
