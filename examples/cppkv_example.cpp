@@ -36,35 +36,12 @@ int main(){
 
 	kv.write("../examples/cppkv_out.kv", ";ov");
 
-	KTable kt;
-	// kt.table_title("");
-	// kt.row({"m<d>", "m<s>", "m<b>"});
-	// kt.row({"test", "test2", "tests"});
-	// kt.row({"?what", "?where", "?when"});
-	// kt.row({"19", "\"yasss\"", "TRUE"});
-	// kt.row({"20", "\"mmmm\"", "TRUE"});
-	// kt.set(KTABLE_INTERWALLS, false);
-	// kt.set(KTABLE_SIDEWALLS, false);
-	// kt.set(KTABLE_TOPBOTTOMHBAR, false);
-	// kt.set(KTABLE_HEADERINTERWALLS, false);
-	// kt.set(KTABLE_HEADERHBAR, false);
-	// kt.set(KTABLE_TITLEHBAR, false);
-	// kt.alignh('l');
-	// kt.alignc('l');
-	// kt.alignt('l');
+	kv.clear();
 
-	// cout << "\n\n" << kt.str() << endl;
+	cout << "\nCleared...\n" << endl;
 
-
-	//
-	//
-	// kv.clread()
-	// if (!kv.checkContains(["Vin", "freq", "Vout"])){
-	// 	cout << "ERROR: " << fn << " does not contain required variables. Exiting." << endl;
-	// 	return -1;
-	// }
-	// vector<double> Vin = kv("Vin").md;
-	// vector<double> Vout = kv("Vout").md;
+	cout << "\nNo. Variables: " << to_string(kv.numVar()) << endl;
+	cout << "Variables:\n\t" << kv.names("mt")[0] << endl;
 
 	return 0;
 }

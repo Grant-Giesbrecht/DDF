@@ -133,7 +133,8 @@ public:
 
 	std::string swrite(std::string fileOut, std::string options="");
 	bool write(std::string fileOut, std::string options="");
-	bool read(std::string fileIn);
+	bool read(std::string fileIn, std::string options="");
+	bool readKV1_V2(std::string fileIn, std::string options="");
 	bool clread(std::string fileIn);
 
 
@@ -177,6 +178,7 @@ private:
 	void init_ktable(KTable& kt);
 
 	std::string header;
+	double fileVersion; //version of read file
 
 };
 
@@ -847,10 +849,18 @@ std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Im
 	return kvf;
 }
 
+/*
+Writes a KV file to disk. Returns true if successful, else false. Options are passed
+to KVFile::swrite - see its documentation for options.
+*/
 bool KVFile::write(std::string fileOut, std::string options){
 
 	//Generate string
 	std::string fileString = swrite(fileOut, options);
+
+	if (fileString == ""){ //Error occured in swrite
+		return false;
+	}
 
 	//Write to file
 	std::ofstream out(fileOut);
@@ -860,12 +870,60 @@ bool KVFile::write(std::string fileOut, std::string options){
     out << fileString;
     out.close();
 
+	return true;
+}
+
+/*
+Reads a KV file. Returns true if successful, else false.
+
+TODO: Accept earlier standards.
+*/
+bool KVFile::read(std::string fileIn, std::string options){ //TODO: Impliment read()
+
+	//Open file - return if fail
+	std::ifstream file(fileIn.c_str());
+	if (!file.is_open()){
+		return false;
+	}
+
+	//Read first line - get version
+ 	std::string line;
+    getline(file, line);
+	file.close();
+
+
+	//Read version
+	try{
+		fileVersion = stod(line.substr(9));
+	}catch(...){
+		return false;
+	}
+
+	//Call appropriate read function
+	if (fileVersion < 2){
+		std::cout << "ERROR: Version 1.x not supported yet" << std::endl;
+		return false;
+	}else if(fileVersion < 3){
+		return readKV1_V2(fileIn, options);
+	}
+
 	return false;
 }
 
-bool KVFile::read(std::string fileIn){ //TODO: Impliment read()
-	std::cout << "Ooops! Not implimented" << std::endl;
-	return false;
+/*
+Read KV1 version 2 file. Returns true if read success.
+*/
+bool KVFile::readKV1_V2(std::string fileIn, std::string options){
+
+	//Open file - return if fail
+	std::ifstream file(fileIn.c_str());
+	if (!file.is_open()){
+		return false;
+	}
+
+	std::cout << "in file" << std::endl;
+
+	return true;
 }
 
 bool KVFile::clread(std::string fileIn){
@@ -887,6 +945,8 @@ bool KVFile::checkContains(std::vector<std::string> names){ //TODO: impliment ch
 Clears all variables from the KVFile object.
 */
 void KVFile::clear(){
+	fileVersion = -1;
+	header = "";
 	variablesFlat.clear();
 	variables1D.clear();
 	variables2D.clear();
