@@ -29,7 +29,7 @@ This element is optional, but must come before any variable statements. It allow
 This element behaves exactly the same way a C comment does. Start the inline comment with two forward slashes. Everything else on the line will be ignored. Multi-line comments are not
 implimented.
 ### Inline variable statements:
-Variable statements are the primary means of storing data in KV files. Inline variable statements define a single variable on a single line. They follow the basic format of `<type> <name> <data> (;)(?<variable-description>)`. The ending semicolon is optional, as is variable description. All characters after the question mark are included in the variable description, except for trailing whitespace, which is trimmed. Note that matrices or matrices (eg. `m<m<d>>`) are *not* supported or required. A 2D matrix uses the same declaration as a 1D matrix, however 3D matrices are not yet supported.
+Variable statements are the primary means of storing data in KV files. Inline variable statements define a single variable on a single line. They follow the basic format of `<type> <name> <data> (;)(?<variable-description>)`. The ending semicolon is optional, as is variable description. All characters after the question mark are included in the variable description, and thus comments can NOT be present on the same line as descriptions. Note that matrices of matrices (eg. `m<m<d>>`) are *not* supported or required. A 2D matrix uses the same declaration as a 1D matrix, however 3D matrices are not yet supported. 
 
   * #### Data types:
   The available data types in KV files are double precision floats, strings, booleans, and matrices of any one data type. Type is indicated with a single letter. Matrices accept the data type in angle brackets. Ex

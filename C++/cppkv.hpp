@@ -7,6 +7,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <regex>
 #include <gstd/gstd.hpp>
 #include <KTable/ktable.hpp>
 
@@ -18,16 +19,6 @@ std::string bool_to_string(bool b);
 //***************************************************************************//
 //**			TYPE DEFINITIONS										   **//
 //***************************************************************************//
-
-/*
-Describes a single data point in a KVar.
-*/
-typedef struct{
-	double d;
-	std::string s;
-	bool b;
-	char type;
-}KVDatum;
 
 
 /*
@@ -151,6 +142,7 @@ public:
 	std::string getHeader();
 
 	double getVersion();
+	std::string err();
 
 	//************** PRINTING
 
@@ -183,7 +175,7 @@ private:
 	std::string header;
 	double fileVersion; //version of read file
 
-	std::string err; //Error data string
+	std::string err_str; //Error data string
 
 };
 
@@ -931,13 +923,15 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 	std::string line;
 	std::vector<gstd::string_idx> words;
 	size_t lineNum = 0;
+	std::regex matrix_identifier("m<.>");
 	while (getline(file, line)){ //For each line in file...
 
 		lineNum++;
 
 		//Break line into words...
-		gstd::ensure_whitespace(line, ";"); //Ensure semicolons are picked up as tokens
-		words = gstd::parseIdx(line, " \t");
+		std::string lineParse = line;
+		gstd::ensure_whitespace(lineParse, ";[]"); //Ensure semicolons are picked up as tokens
+		words = gstd::parseIdx(lineParse, " \t");
 
 		if (words.size() < 1) continue; //Skip blank lines
 
@@ -945,7 +939,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 			//Ensure 2 words present
 			if (words.size() != 2){
-				err = "Failed on line " + std::to_string(lineNum) + ".\n\tVersion statement accepts exactly 2 words.";
+				err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tVersion statement accepts exactly 2 words.";
 				return false;
 			}
 
@@ -953,7 +947,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 			try{
 				fileVersion = std::stod(words[1].str);
 			}catch(...){
-				err = "Failed on line " + std::to_string(lineNum) + ".\n\tFailed to read version number.";
+				err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFailed to read version number.";
 				return false;
 			}
 
@@ -990,9 +984,248 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 			//Ensure end of file was not reached before header found
 			if (!foundHeader){
-				err = "Failed on line " + std::to_string(openedOnLine) + ".\n\tFailed to find closing #HEADER statement.";
+				err_str = "Failed on line " + std::to_string(openedOnLine) + ".\n\tFailed to find closing #HEADER statement.";
+				return false;
 			}
 
+        }else if(words[0].str == "//"){ //Is a comment
+
+            continue;
+
+        }else if (words[0].str == "d" || words[0].str == "b" || words[0].str == "s" || std::regex_match(words[0].str, matrix_identifier)){ //Inline variables
+
+			//Ensure 3+ words exist
+			if (words.size() < 3){
+				err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tInsufficient number of tokens for inline variable statement.";
+				return false;
+			}
+
+			//Read variable name, ensure is valid
+			if (!isValidName(words[1].str)){
+				err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tInvalid variable name '" + words[1].str +"'.";
+				return false;
+			}
+
+			//Read value
+			size_t optional_features_start = 3;
+			if (words[0].str == "d"){ //Double
+
+				KVFlatItem temp;
+				temp.name = words[1].str;
+				temp.type = 'd';
+				try{
+					temp.d = stod(words[2].str);
+				}catch(...){
+					err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Failed to interpret '" + words[2].str + "' as a double.";
+					return false;
+				}
+				optional_features_start = 3;
+
+				//Read optional arguments/features
+				bool allow_semi = true;
+				bool in_desc = false;
+				for (size_t i = optional_features_start ; i < words.size() ; i++){
+
+					std::cout << "\t" << words[i].str << std::endl;
+
+					if (words[i].str == ";"){
+						if (!allow_semi){
+							err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Detected excessive semicolons.";
+							return false;
+						}
+						allow_semi = false;
+					}else if(words[i].str == "?" || (words[i].str.length() > 0 && words[i].str[0] == '?')){
+						in_desc = true;
+						temp.description = line.substr(words[i].idx-words[i].str.length()+2); //The description is the string of characters starting immediately after the questionmark
+					}else if(words[i].str == "//"){
+						break; //the rest is a comment - exit loop
+					}
+
+				}
+
+				variablesFlat.push_back(temp);
+
+			}else if(words[0].str == "b"){ //Boolean
+
+				KVFlatItem temp;
+				temp.name = words[1].str;
+				temp.type = 'b';
+				try{
+					temp.b = gstd::to_bool(words[2].str);
+				}catch(...){
+					err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Failed to interpret '" + words[2].str + "' as a bool.";
+					return false;
+				}
+				optional_features_start = 3;
+
+				//Read optional arguments/features
+				bool allow_semi = false;
+				bool in_desc = false;
+				for (size_t i = optional_features_start ; i < words.size() ; i++){
+
+					if (words[i].str == ";"){
+						if (!allow_semi){
+							err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Detected excessive semicolons.";
+							return false;
+						}
+						allow_semi = false;
+					}else if(words[i].str == "?" || (words[i].str.length() > 0 && words[i].str[0] == '?')){
+						in_desc = true;
+						temp.description = line.substr(words[i].idx-words[i].str.length()+2); //The description is the string of characters starting immediately after the questionmark
+					}else if(words[i].str == "//"){
+						break; //the rest is a comment - exit loop
+					}
+
+				}
+
+				variablesFlat.push_back(temp);
+
+			}else if(words[0].str == "s"){ //string
+
+				KVFlatItem temp;
+				temp.name = words[1].str;
+				temp.type = 's';
+				try{
+
+					size_t end;
+					temp.s = gstd::get_string(line, end, words[0].idx+1);
+
+					//Find word where to start to looking for optional features
+					for (size_t i = 0 ; i < words.size() ; i++){
+						if (words[i].idx > end){
+							optional_features_start = i;
+							break;
+						}
+					}
+
+				}catch(...){
+					err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Failed to interpret '" + words[2].str + "' as a string.";
+					return false;
+				}
+				optional_features_start = 3;
+
+				//Read optional arguments/features
+				bool allow_semi = false;
+				bool in_desc = false;
+				for (size_t i = optional_features_start ; i < words.size() ; i++){
+
+					if (words[i].str == ";"){
+						if (!allow_semi){
+							err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Detected excessive semicolons.";
+							return false;
+						}
+						allow_semi = false;
+					}else if(words[i].str == "?" || (words[i].str.length() > 0 && words[i].str[0] == '?')){
+						in_desc = true;
+						temp.description = line.substr(words[i].idx-words[i].str.length()+2); //The description is the string of characters starting immediately after the questionmark
+					}else if(words[i].str == "//"){
+						break; //the rest is a comment - exit loop
+					}
+
+				}
+
+				variablesFlat.push_back(temp);
+
+			}else if(words[0].str == "m<d>"){ //Double matrix
+
+				// KVFlatItem temp;
+				// try{
+				// 	temp.d = stod(words[2]);
+				// }catch(...){
+				// 	err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Failed to interpret '" + words[2] + "' as a double.";
+				// 	return false;
+				// }
+				// optional_features_start = 3;
+
+				//Read optional arguments/features
+				// bool allow_semi = false;
+				// bool in_desc = false;
+				// for (size_t i = optional_features_start ; i < words.size() ; i++){
+				//
+				// 	if (words[i].str == ";"){
+				// 		if (!allow_semi){
+				// 			err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Detected excessive semicolons."
+				// 			return false;
+				// 		}
+				// 		allow_semi = false;
+				// 	}else if(words[i].str == "?" || (words[i].length() > 0 && words[i][0] == '?')){
+				// 		in_desc = true;
+				// 		temp.description = line.substr(words[i].idx-words.str.length()+2) //The description is the string of characters starting immediately after the questionmark
+				// 	}else if(words[i].str == "//"){
+				// 		break; //the rest is a comment - exit loop
+				// 	}
+				//
+				// }
+
+			}else if(words[0].str == "m<b>"){ //Bool matrix
+
+				// KVFlatItem temp;
+				// try{
+				// 	temp.d = stod(words[2]);
+				// }catch(...){
+				// 	err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Failed to interpret '" + words[2] + "' as a double.";
+				// 	return false;
+				// }
+				// optional_features_start = 3;
+
+				//Read optional arguments/features
+				// bool allow_semi = false;
+				// bool in_desc = false;
+				// for (size_t i = optional_features_start ; i < words.size() ; i++){
+				//
+				// 	if (words[i].str == ";"){
+				// 		if (!allow_semi){
+				// 			err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Detected excessive semicolons."
+				// 			return false;
+				// 		}
+				// 		allow_semi = false;
+				// 	}else if(words[i].str == "?" || (words[i].length() > 0 && words[i][0] == '?')){
+				// 		in_desc = true;
+				// 		temp.description = line.substr(words[i].idx-words.str.length()+2) //The description is the string of characters starting immediately after the questionmark
+				// 	}else if(words[i].str == "//"){
+				// 		break; //the rest is a comment - exit loop
+				// 	}
+				//
+				// }
+
+			}else if(words[0].str == "m<s>"){ //String matrix
+
+				// KVFlatItem temp;
+				// try{
+				// 	temp.d = stod(words[2]);
+				// }catch(...){
+				// 	err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Failed to interpret '" + words[2] + "' as a double.";
+				// 	return false;
+				// }
+				// optional_features_start = 3;
+
+				// //Read optional arguments/features
+				// bool allow_semi = false;
+				// bool in_desc = false;
+				// for (size_t i = optional_features_start ; i < words.size() ; i++){
+				//
+				// 	if (words[i].str == ";"){
+				// 		if (!allow_semi){
+				// 			err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Detected excessive semicolons."
+				// 			return false;
+				// 		}
+				// 		allow_semi = false;
+				// 	}else if(words[i].str == "?" || (words[i].length() > 0 && words[i][0] == '?')){
+				// 		in_desc = true;
+				// 		temp.description = line.substr(words[i].idx-words.str.length()+2) //The description is the string of characters starting immediately after the questionmark
+				// 	}else if(words[i].str == "//"){
+				// 		break; //the rest is a comment - exit loop
+				// 	}
+				//
+				// }
+
+			}
+
+
+
+		}else{
+			err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tUnidentified token '" + words[0].str + "'";
+			return false;
 		}
 
 
@@ -1058,6 +1291,13 @@ Returns the file's verion.
 */
 double KVFile::getVersion(){
 	return fileVersion;
+}
+
+/*
+Returns the error status
+*/
+std::string KVFile::err(){
+	return err_str;
 }
 
 //***************************************************************************//

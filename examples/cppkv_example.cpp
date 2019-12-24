@@ -8,8 +8,6 @@ using namespace std;
 
 int main(){
 
-	string fn = "./experiment_data.kv";
-
 	double x = 5;
 
 	vector<double> Vout;
@@ -20,7 +18,6 @@ int main(){
 
 	vector<vector<double> > V2d;
 	V2d.push_back(Vout); V2d.push_back(Vin);
-
 	KVFile kv;
 	kv.setHeader("This is a test file.\n\tI was written by a test program :)");
 	kv.add(x, "X", "I am a description");
@@ -41,11 +38,20 @@ int main(){
 	cout << "\nNo. Variables: " << to_string(kv.numVar()) << endl;
 	cout << "Variables:\n\t" << kv.names("mt")[0] << endl;
 
-	kv.read("../examples/cppkv_out.kv");
-	cout << "Read file..." << endl;
+	if (!kv.read("../C++/read_test.kv")){
+		cout << "Failed to read file." << endl;
+		cout << kv.err() << endl;
+	}else{
+		cout << "Read file..." << endl;
 
-	cout << "\nVersion: " << kv.getVersion() << endl;
-	cout << "Header: " << kv.getHeader() << endl;
+		cout << "\nVersion: " << kv.getVersion() << endl;
+		cout << "Header: " << kv.getHeader() << endl;
+
+		cout << "\nNo. Variables: " << to_string(kv.numVar()) << endl;
+		cout << "Variables:\n\t" << kv.names("mt")[0] << endl;
+	}
+
+
 
 
 	return 0;
