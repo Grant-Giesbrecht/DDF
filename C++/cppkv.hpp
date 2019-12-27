@@ -147,6 +147,7 @@ public:
 	//************** PRINTING
 
 	std::vector<std::string> names(std::string options="");
+	std::string show();
 
 
 private:
@@ -1374,6 +1375,39 @@ std::vector<std::string> KVFile::names(std::string options){
 
 	//Return names vector
 	return names_out;
+
+}
+
+/*
+Returns the contents of the KVFile object as a string.
+*/
+std::string KVFile::show(){
+
+	std::string out = "";
+
+	out = "No. Variables: " + std::to_string(numVar());
+	out = out + "\nFlat Variables:\n";
+	for (size_t i = 0 ; i < variablesFlat.size() ; i++){
+		out = out + "\t" + variablesFlat[i].name + " (";
+		switch (variablesFlat[i].type){
+			case('d'):
+				out = out + "double) " + variablesFlat[i].d;
+				break;
+			case('s'):
+				out = out + "string) " + variablesFlat[i].s;
+				break;
+			case('b'):
+				out = out + "bool) " + variablesFlat[i].b;
+				break;
+			default:
+				out = out + "?) ?";
+				break;
+		}
+		if (variablesFlat[i].desc.length() > 0){
+			out = out + "\n\t\tDesc: " + variablesFlat[i].desc
+		}
+
+	}
 
 }
 
