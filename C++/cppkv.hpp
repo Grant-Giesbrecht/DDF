@@ -930,9 +930,9 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 		lineNum++;
 
 		//Break line into words...
-		std::string lineParse = line;
-		gstd::ensure_whitespace(lineParse, ";[]"); //Ensure semicolons are picked up as tokens
-		words = gstd::parseIdx(lineParse, " \t");
+		// std::string lineParse = line;
+		// gstd::ensure_whitespace(lineParse, ";[]"); //Ensure semicolons are picked up as tokens
+		words = gstd::parseIdx(line, " \t", ";[]");
 
 		if (words.size() < 1) continue; //Skip blank lines
 
@@ -1027,8 +1027,6 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 				bool in_desc = false;
 				for (size_t i = optional_features_start ; i < words.size() ; i++){
 
-					std::cout << "\t" << words[i].str << std::endl;
-
 					if (words[i].str == ";"){
 						if (!allow_semi){
 							err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Detected excessive semicolons.";
@@ -1072,7 +1070,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 						allow_semi = false;
 					}else if(words[i].str == "?" || (words[i].str.length() > 0 && words[i].str[0] == '?')){
 						in_desc = true;
-						temp.description = line.substr(words[i].idx-words[i].str.length()+2); //The description is the string of characters starting immediately after the questionmark
+						temp.description = line.substr(words[i].idx+1); //The description is the string of characters starting immediately after the questionmark
 					}else if(words[i].str == "//"){
 						break; //the rest is a comment - exit loop
 					}
@@ -1093,7 +1091,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 					//Find word where to start to looking for optional features
 					for (size_t i = 0 ; i < words.size() ; i++){
-						if (words[i].idx > end){
+						if (words[i].idx+words[i].str.length() > end){
 							optional_features_start = i;
 							break;
 						}
@@ -1118,7 +1116,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 						allow_semi = false;
 					}else if(words[i].str == "?" || (words[i].str.length() > 0 && words[i].str[0] == '?')){
 						in_desc = true;
-						temp.description = line.substr(words[i].idx-words[i].str.length()+2); //The description is the string of characters starting immediately after the questionmark
+						temp.description = line.substr(words[i].idx+1); //The description is the string of characters starting immediately after the questionmark
 					}else if(words[i].str == "//"){
 						break; //the rest is a comment - exit loop
 					}
@@ -1129,34 +1127,43 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 			}else if(words[0].str == "m<d>"){ //Double matrix
 
-				// KVFlatItem temp;
-				// try{
-				// 	temp.d = stod(words[2]);
-				// }catch(...){
-				// 	err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Failed to interpret '" + words[2] + "' as a double.";
-				// 	return false;
-				// }
-				// optional_features_start = 3;
+				KVF1DItem temp;
 
-				//Read optional arguments/features
-				// bool allow_semi = false;
-				// bool in_desc = false;
-				// for (size_t i = optional_features_start ; i < words.size() ; i++){
-				//
-				// 	if (words[i].str == ";"){
-				// 		if (!allow_semi){
-				// 			err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Detected excessive semicolons."
-				// 			return false;
-				// 		}
-				// 		allow_semi = false;
-				// 	}else if(words[i].str == "?" || (words[i].length() > 0 && words[i][0] == '?')){
-				// 		in_desc = true;
-				// 		temp.description = line.substr(words[i].idx-words.str.length()+2) //The description is the string of characters starting immediately after the questionmark
-				// 	}else if(words[i].str == "//"){
-				// 		break; //the rest is a comment - exit loop
-				// 	}
-				//
-				// }
+				size_t start = line.find("[", 0);
+				size_t end = line.find("]", 0);
+				if (start == std::string::npos || end == std::string::npos){
+					err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Failed to interpret '" + words[2] + "' as a matrix of doubles.";
+					return false;
+				}
+
+				std::string mat_str = line.substr(start, end+1);
+				try{
+					temp.md = to_dvec(mat_str);
+				}catch(...){
+					err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Failed to interpret '" + words[2] + "' as a matrix of doubles.";
+					return false;
+				}
+				optional_features_start = 3;
+
+				Read optional arguments/features
+				bool allow_semi = false;
+				bool in_desc = false;
+				for (size_t i = optional_features_start ; i < words.size() ; i++){
+
+					if (words[i].str == ";"){
+						if (!allow_semi){
+							err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Detected excessive semicolons."
+							return false;
+						}
+						allow_semi = false;
+					}else if(words[i].str == "?" || (words[i].length() > 0 && words[i][0] == '?')){
+						in_desc = true;
+						temp.description = line.substr(words[i].idx-words.str.length()+2) //The description is the string of characters starting immediately after the questionmark
+					}else if(words[i].str == "//"){
+						break; //the rest is a comment - exit loop
+					}
+
+				}
 
 			}else if(words[0].str == "m<b>"){ //Bool matrix
 
@@ -1385,30 +1392,126 @@ std::string KVFile::show(){
 
 	std::string out = "";
 
+
+
 	out = "No. Variables: " + std::to_string(numVar());
 	out = out + "\nFlat Variables:\n";
-	for (size_t i = 0 ; i < variablesFlat.size() ; i++){
-		out = out + "\t" + variablesFlat[i].name + " (";
-		switch (variablesFlat[i].type){
-			case('d'):
-				out = out + "double) " + variablesFlat[i].d;
-				break;
-			case('s'):
-				out = out + "string) " + variablesFlat[i].s;
-				break;
-			case('b'):
-				out = out + "bool) " + variablesFlat[i].b;
-				break;
-			default:
-				out = out + "?) ?";
-				break;
-		}
-		if (variablesFlat[i].desc.length() > 0){
-			out = out + "\n\t\tDesc: " + variablesFlat[i].desc
+
+	if (variablesFlat.size() > 0){
+		KTable flat_vars;
+		flat_vars.table_title("Flat Variables");
+		flat_vars.row({"Name", "Type", "Value", "Description"});
+		for (size_t i = 0 ; i < variablesFlat.size() ; i++){
+
+			std::string typecode = "";
+			std::string valstr = "";
+			switch (variablesFlat[i].type){
+				case('d'):
+					typecode = "double";
+					valstr = std::to_string(variablesFlat[i].d);
+					break;
+				case('s'):
+					typecode = "string";
+					valstr = variablesFlat[i].s;
+					break;
+				case('b'):
+					typecode = "bool";
+					valstr = bool_to_string(variablesFlat[i].b);
+					break;
+				default:
+					typecode = "?";
+					valstr = "?";
+					break;
+			}
+
+			flat_vars.row({variablesFlat[i].name, typecode, valstr, variablesFlat[i].description});
+
 		}
 
+		flat_vars.alignt('l');
+		flat_vars.alignh('l');
+		flat_vars.alignc('c');
+		flat_vars.alignc(3, 'l');
+		out = out + flat_vars.str();
 	}
 
+	if (variables1D.size() > 0){
+		KTable m1d_vars;
+		m1d_vars.table_title("Flat Variables");
+		m1d_vars.row({"Name", "Type", "Value", "Description"});
+		for (size_t i = 0 ; i < variables1D.size() ; i++){
+
+			std::string typecode = "";
+			std::string valstr = "Not Impl";
+			switch (variables1D[i].type){
+				case('d'):
+					typecode = "double";
+					// valstr = std::to_string(variables1D[i].d);
+					break;
+				case('s'):
+					typecode = "string";
+					// valstr = variables1D[i].s;
+					break;
+				case('b'):
+					typecode = "bool";
+					// valstr = bool_to_string(variables1D[i].b);
+					break;
+				default:
+					typecode = "?";
+					// valstr = "?";
+					break;
+			}
+
+			m1d_vars.row({variables1D[i].name, typecode, valstr, variables1D[i].description});
+
+		}
+
+		m1d_vars.alignt('l');
+		m1d_vars.alignh('l');
+		m1d_vars.alignc('c');
+		m1d_vars.alignc(3, 'l');
+		out = out + m1d_vars.str();
+	}
+
+	if (variables2D.size() > 0){
+		KTable m2d_vars;
+		m2d_vars.table_title("Flat Variables");
+		m2d_vars.row({"Name", "Type", "Value", "Description"});
+		for (size_t i = 0 ; i < variables2D.size() ; i++){
+
+			std::string typecode = "";
+			std::string valstr = "Not Impl";
+			switch (variables2D[i].type){
+				case('d'):
+					typecode = "double";
+					// valstr = std::to_string(variables2D[i].d);
+					break;
+				case('s'):
+					typecode = "string";
+					// valstr = variables2D[i].s;
+					break;
+				case('b'):
+					typecode = "bool";
+					// valstr = bool_to_string(variables2D[i].b);
+					break;
+				default:
+					typecode = "?";
+					valstr = "?";
+					break;
+			}
+
+			m2d_vars.row({variables2D[i].name, typecode, valstr, variables2D[i].description});
+
+		}
+
+		m2d_vars.alignt('l');
+		m2d_vars.alignh('l');
+		m2d_vars.alignc('c');
+		m2d_vars.alignc(3, 'l');
+		out = out + m2d_vars.str();
+	}
+
+	return out;
 }
 
 //***************************************************************************//
