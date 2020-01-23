@@ -1128,6 +1128,8 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 			}else if(words[0].str == "m<d>"){ //Double matrix
 
 				KV1DItem temp;
+				temp.name = words[1].str;
+				temp.type = 'd';
 
 				size_t start = line.find("[", 0);
 				size_t end = line.find("]", 0);
@@ -1173,68 +1175,115 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 				}
 
+				variables1D.push_back(temp);
+
 			}else if(words[0].str == "m<b>"){ //Bool matrix
 
-				// KVFlatItem temp;
-				// try{
-				// 	temp.d = stod(words[2]);
-				// }catch(...){
-				// 	err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Failed to interpret '" + words[2] + "' as a double.";
-				// 	return false;
-				// }
-				// optional_features_start = 3;
+				KV1DItem temp;
+				temp.name = words[1].str;
+				temp.type = 'b';
+
+				size_t start = line.find("[", 0);
+				size_t end = line.find("]", 0);
+				if (start == std::string::npos || end == std::string::npos){
+					err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Failed to find square brackets.";
+					return false;
+				}
+
+				std::string mat_str = line.substr(start+1, end-start-1);
+				std::cout << mat_str << std::endl;
+
+
+				try{
+					temp.mb = gstd::to_bvec(mat_str);
+				}catch(...){
+					err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Failed to interpret '" + mat_str + "' as a matrix of booleans.";
+					return false;
+				}
+
+				//Find where data ends, optional features begin
+				optional_features_start = 4;
+				for (; optional_features_start < words.size() ; optional_features_start++){
+					if (words[optional_features_start].idx > end){
+						break;
+					}
+				}
 
 				//Read optional arguments/features
-				// bool allow_semi = false;
-				// bool in_desc = false;
-				// for (size_t i = optional_features_start ; i < words.size() ; i++){
-				//
-				// 	if (words[i].str == ";"){
-				// 		if (!allow_semi){
-				// 			err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Detected excessive semicolons."
-				// 			return false;
-				// 		}
-				// 		allow_semi = false;
-				// 	}else if(words[i].str == "?" || (words[i].length() > 0 && words[i][0] == '?')){
-				// 		in_desc = true;
-				// 		temp.description = line.substr(words[i].idx-words.str.length()+2) //The description is the string of characters starting immediately after the questionmark
-				// 	}else if(words[i].str == "//"){
-				// 		break; //the rest is a comment - exit loop
-				// 	}
-				//
-				// }
+				bool allow_semi = true;
+				bool in_desc = false;
+				for (size_t i = optional_features_start ; i < words.size() ; i++){
+
+					if (words[i].str == ";"){
+						if (!allow_semi){
+							err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Detected excessive semicolons.";
+							return false;
+						}
+						allow_semi = false;
+					}else if(words[i].str == "?" || (words[i].str.length() > 0 && words[i].str[0] == '?')){
+						in_desc = true;
+						temp.description = line.substr(words[i].idx+1); //The description is the string of characters starting immediately after the questionmark
+					}else if(words[i].str == "//"){
+						break; //the rest is a comment - exit loop
+					}
+
+				}
+
+				variables1D.push_back(temp);
 
 			}else if(words[0].str == "m<s>"){ //String matrix
 
-				// KVFlatItem temp;
-				// try{
-				// 	temp.d = stod(words[2]);
-				// }catch(...){
-				// 	err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Failed to interpret '" + words[2] + "' as a double.";
-				// 	return false;
-				// }
-				// optional_features_start = 3;
+				KV1DItem temp;
+				temp.name = words[1].str;
+				temp.type = 's';
 
-				// //Read optional arguments/features
-				// bool allow_semi = false;
-				// bool in_desc = false;
-				// for (size_t i = optional_features_start ; i < words.size() ; i++){
-				//
-				// 	if (words[i].str == ";"){
-				// 		if (!allow_semi){
-				// 			err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Detected excessive semicolons."
-				// 			return false;
-				// 		}
-				// 		allow_semi = false;
-				// 	}else if(words[i].str == "?" || (words[i].length() > 0 && words[i][0] == '?')){
-				// 		in_desc = true;
-				// 		temp.description = line.substr(words[i].idx-words.str.length()+2) //The description is the string of characters starting immediately after the questionmark
-				// 	}else if(words[i].str == "//"){
-				// 		break; //the rest is a comment - exit loop
-				// 	}
-				//
-				// }
+				size_t start = line.find("[", 0);
+				size_t end = line.find("]", 0);
+				if (start == std::string::npos || end == std::string::npos){
+					err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Failed to find square brackets.";
+					return false;
+				}
 
+				std::string mat_str = line.substr(start+1, end-start-1);
+				std::cout << mat_str << std::endl;
+
+
+				try{
+					temp.ms = gstd::to_svec(mat_str);
+				}catch(...){
+					err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Failed to interpret '" + mat_str + "' as a matrix of strings.";
+					return false;
+				}
+
+				//Find where data ends, optional features begin
+				optional_features_start = 4;
+				for (; optional_features_start < words.size() ; optional_features_start++){
+					if (words[optional_features_start].idx > end){
+						break;
+					}
+				}
+
+				//Read optional arguments/features
+				bool allow_semi = true;
+				bool in_desc = false;
+				for (size_t i = optional_features_start ; i < words.size() ; i++){
+
+					if (words[i].str == ";"){
+						if (!allow_semi){
+							err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Detected excessive semicolons.";
+							return false;
+						}
+						allow_semi = false;
+					}else if(words[i].str == "?" || (words[i].str.length() > 0 && words[i].str[0] == '?')){
+						in_desc = true;
+						temp.description = line.substr(words[i].idx+1); //The description is the string of characters starting immediately after the questionmark
+					}else if(words[i].str == "//"){
+						break; //the rest is a comment - exit loop
+					}
+
+				}
+
+				variables1D.push_back(temp);
 			}
 
 
@@ -1445,38 +1494,49 @@ std::string KVFile::show(){
 
 	if (variables1D.size() > 0){
 		KTable m1d_vars;
-		m1d_vars.table_title("Flat Variables");
+		m1d_vars.table_title("1D Variables");
 		m1d_vars.row({"Name", "Type", "Value", "Description"});
 		for (size_t i = 0 ; i < variables1D.size() ; i++){
 
+			size_t k;
 			std::string typecode = "";
-			std::string valstr = "Not Impl";
+			std::string val_str = "[";
 			switch (variables1D[i].type){
 				case('d'):
-					typecode = "double";
-					// valstr = std::to_string(variables1D[i].d);
+					typecode = "m<double>";
+					for (k = 0 ; k < variables1D[i].md.size()-1 ; k++){
+						val_str = val_str + to_gstring(variables1D[i].md[k]) + ", ";
+					}
+					val_str = val_str + to_gstring(variables1D[i].md[k]);
 					break;
 				case('s'):
-					typecode = "string";
-					// valstr = variables1D[i].s;
+					typecode = "m<string>";
+					for (k = 0 ; k < variables1D[i].ms.size()-1 ; k++){
+						val_str = val_str + "\"" + (variables1D[i].ms[k]) + "\", ";
+					}
+					val_str = val_str + "\"" + (variables1D[i].ms[k]) + "\"";
 					break;
 				case('b'):
-					typecode = "bool";
-					// valstr = bool_to_string(variables1D[i].b);
+					typecode = "m<bool>";
+					for (k = 0 ; k < variables1D[i].mb.size()-1 ; k++){
+						val_str = val_str + bool_to_string(variables1D[i].mb[k]) + ", ";
+					}
+					val_str = val_str + bool_to_string(variables1D[i].mb[k]);
 					break;
 				default:
 					typecode = "?";
-					// valstr = "?";
+					valstr = "?";
 					break;
 			}
+			val_str = val_str + "]";
 
-			m1d_vars.row({variables1D[i].name, typecode, valstr, variables1D[i].description});
+			m1d_vars.row({variables1D[i].name, typecode, val_str, variables1D[i].description});
 
 		}
 
 		m1d_vars.alignt('l');
 		m1d_vars.alignh('l');
-		m1d_vars.alignc('c');
+		m1d_vars.alignc('l');
 		m1d_vars.alignc(3, 'l');
 		out = out + m1d_vars.str();
 	}
@@ -1845,7 +1905,7 @@ void KVFile::init_ktable(KTable& kt){
 /*
 Converts a double to a string using 'g' formatting.
 
-precision is the number after the decimal in fprint strings. It
+precision is the number of characters after the decimal in fprint strings. It
 specifies the max number of digits after the decimal. Recommended value = 6.
 
 buf_size is the size of the char buffer to use. Defaults to 30.
