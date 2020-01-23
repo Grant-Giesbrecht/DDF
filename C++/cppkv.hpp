@@ -1058,7 +1058,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 				optional_features_start = 3;
 
 				//Read optional arguments/features
-				bool allow_semi = false;
+				bool allow_semi = true;
 				bool in_desc = false;
 				for (size_t i = optional_features_start ; i < words.size() ; i++){
 
@@ -1104,7 +1104,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 				optional_features_start = 3;
 
 				//Read optional arguments/features
-				bool allow_semi = false;
+				bool allow_semi = true;
 				bool in_desc = false;
 				for (size_t i = optional_features_start ; i < words.size() ; i++){
 
@@ -1127,38 +1127,46 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 			}else if(words[0].str == "m<d>"){ //Double matrix
 
-				KVF1DItem temp;
+				KV1DItem temp;
 
 				size_t start = line.find("[", 0);
 				size_t end = line.find("]", 0);
 				if (start == std::string::npos || end == std::string::npos){
-					err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Failed to interpret '" + words[2] + "' as a matrix of doubles.";
+					err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Failed to find square brackets.";
 					return false;
 				}
 
-				std::string mat_str = line.substr(start, end+1);
+				std::string mat_str = line.substr(start+1, end-1);
 				try{
-					temp.md = to_dvec(mat_str);
+					temp.md = gstd::to_dvec(mat_str);
 				}catch(...){
-					err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Failed to interpret '" + words[2] + "' as a matrix of doubles.";
+					err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Failed to interpret '" + mat_str + "' as a matrix of doubles.";
 					return false;
 				}
-				optional_features_start = 3;
 
-				Read optional arguments/features
-				bool allow_semi = false;
+				//Find where data ends, optional features begin
+				optional_features_start = 4;
+				for (; optional_features_start < words.size() ; optional_features_start++){
+					if (words[optional_features_start].idx > end){
+						break;
+					}
+				}
+
+
+				//Read optional arguments/features
+				bool allow_semi = true;
 				bool in_desc = false;
 				for (size_t i = optional_features_start ; i < words.size() ; i++){
 
 					if (words[i].str == ";"){
 						if (!allow_semi){
-							err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1] + "': Detected excessive semicolons."
+							err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tFor variable '" + words[1].str + "': Detected excessive semicolons.";
 							return false;
 						}
 						allow_semi = false;
-					}else if(words[i].str == "?" || (words[i].length() > 0 && words[i][0] == '?')){
+					}else if(words[i].str == "?" || (words[i].str.length() > 0 && words[i].str[0] == '?')){
 						in_desc = true;
-						temp.description = line.substr(words[i].idx-words.str.length()+2) //The description is the string of characters starting immediately after the questionmark
+						temp.description = line.substr(words[i].idx+1); //The description is the string of characters starting immediately after the questionmark
 					}else if(words[i].str == "//"){
 						break; //the rest is a comment - exit loop
 					}
