@@ -1644,8 +1644,9 @@ std::string KVFile::show(){
 
 		flat_vars.alignt('l');
 		flat_vars.alignh('l');
-		flat_vars.alignc('c');
+		flat_vars.alignc('l');
 		flat_vars.alignc(3, 'l');
+		flat_vars.trimc('c', 25);
 		out = out + flat_vars.str();
 	}
 
@@ -1695,44 +1696,75 @@ std::string KVFile::show(){
 		m1d_vars.alignh('l');
 		m1d_vars.alignc('l');
 		m1d_vars.alignc(3, 'l');
+		m1d_vars.trimc('c', 25);
 		out = out + m1d_vars.str();
 	}
 
 	if (variables2D.size() > 0){
 		KTable m2d_vars;
-		m2d_vars.table_title("Flat Variables");
+		m2d_vars.table_title("2D Variables");
 		m2d_vars.row({"Name", "Type", "Value", "Description"});
 		for (size_t i = 0 ; i < variables2D.size() ; i++){
 
+			size_t k,j;
 			std::string typecode = "";
-			std::string valstr = "Not Impl";
+			std::string val_str = "";
 			switch (variables2D[i].type){
 				case('d'):
 					typecode = "double";
+					for (k = 0 ; k < variables2D[i].md2.size()-1 ; k++){
+						for (j = 0 ; j < variables2D[i].md2[k].size()-1 ; j++){
+							val_str = val_str + gstd::to_gstring(variables2D[i].md2[k][j]) + ", ";
+						}
+						val_str = val_str + gstd::to_gstring(variables2D[i].md2[k][j]) + " ; ";
+					}
+					for (j = 0 ; j < variables2D[i].md2[k].size()-1 ; j++){
+						val_str = val_str + gstd::to_gstring(variables2D[i].md2[k][j]) + ", ";
+					}
+					val_str = val_str + gstd::to_gstring(variables2D[i].md2[k][j]);
 					// valstr = std::to_string(variables2D[i].d);
 					break;
 				case('s'):
 					typecode = "string";
-					// valstr = variables2D[i].s;
+					for (k = 0 ; k < variables2D[i].ms2.size()-1 ; k++){
+						for (j = 0 ; j < variables2D[i].ms2[k].size()-1 ; j++){
+							val_str = val_str + (variables2D[i].ms2[k][j]) + ", ";
+						}
+						val_str = val_str + (variables2D[i].ms2[k][j]) + " ; ";
+					}
+					for (j = 0 ; j < variables2D[i].ms2[k].size()-1 ; j++){
+						val_str = val_str + (variables2D[i].ms2[k][j]) + ", ";
+					}
+					val_str = val_str + (variables2D[i].ms2[k][j]);
 					break;
 				case('b'):
 					typecode = "bool";
-					// valstr = bool_to_string(variables2D[i].b);
+					for (k = 0 ; k < variables2D[i].mb2.size()-1 ; k++){
+						for (j = 0 ; j < variables2D[i].mb2[k].size()-1 ; j++){
+							val_str = val_str + bool_to_string(variables2D[i].mb2[k][j]) + ", ";
+						}
+						val_str = val_str + bool_to_string(variables2D[i].mb2[k][j]) + " ; ";
+					}
+					for (j = 0 ; j < variables2D[i].mb2[k].size()-1 ; j++){
+						val_str = val_str + bool_to_string(variables2D[i].mb2[k][j]) + ", ";
+					}
+					val_str = val_str + bool_to_string(variables2D[i].mb2[k][j]);
 					break;
 				default:
 					typecode = "?";
-					valstr = "?";
+					val_str = "?";
 					break;
 			}
 
-			m2d_vars.row({variables2D[i].name, typecode, valstr, variables2D[i].description});
+			m2d_vars.row({variables2D[i].name, typecode, val_str, variables2D[i].description});
 
 		}
 
 		m2d_vars.alignt('l');
 		m2d_vars.alignh('l');
-		m2d_vars.alignc('c');
+		m2d_vars.alignc('l');
 		m2d_vars.alignc(3, 'l');
+		m2d_vars.trimc('c', 25);
 		out = out + m2d_vars.str();
 	}
 
