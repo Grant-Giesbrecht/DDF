@@ -29,7 +29,7 @@ This element is optional, but must come before any variable statements. It allow
 This element behaves exactly the same way a C comment does. Start the inline comment with two forward slashes. Everything else on the line will be ignored. Multi-line comments are not
 implimented.
 ### Inline variable statements:
-Variable statements are the primary means of storing data in KV files. Inline variable statements define a single variable on a single line. They follow the basic format of `<type> <name> <data> (;)(?<variable-description>)`. The ending semicolon is optional, as is variable description. All characters after the question mark are included in the variable description, and thus comments can NOT be present on the same line as descriptions. Note that matrices of matrices (eg. `m<m<d>>`) are *not* supported or required. A 2D matrix uses the same declaration as a 1D matrix, however 3D matrices are not yet supported. 
+Variable statements are the primary means of storing data in KV files. Inline variable statements define a single variable on a single line. They follow the basic format of `<type> <name> <data> (;)(?<variable-description>)`. The ending semicolon is optional, as is variable description. All characters after the question mark are included in the variable description, and thus comments can NOT be present on the same line as descriptions. Note that matrices of matrices (eg. `m<m<d>>`) are *not* supported or required. A 2D matrix uses the same declaration as a 1D matrix, however 3D matrices are not yet supported.
 
   * #### Data types:
   The available data types in KV files are double precision floats, strings, booleans, and matrices of any one data type. Type is indicated with a single letter. Matrices accept the data type in angle brackets. Ex
@@ -62,6 +62,13 @@ Vertical variable statements follow the same general format as inline variable s
   * Descriptions are still optional, but instead of appearing at the end of a line, they must appear below the variable names. Descriptions for multiple variables are separated by question marks. If one variable in the vertical block has a description, all must have descriptions, although they can be left blank by not putting text after the question mark.
   * Only one vertical variable statement may be present in each vertical block. However, the the
   single variable statement may define multiple variables (as shown in example below)
+  * Comments can appear in a vertical variable statement both after a line or on an individual line.
+
+#### Matrices of different lengths in same vertical block:
+Matrices with different lengths can be stored in the same vertical block, but they must be saved in a specific order. The issue arrives because data elements do not need to be 'aligned' with their variable names, titles, descriptions, etc., instead the KV file just recognizes whitespace separating elements. This means it couldn't recognize a 'gap' for the 2nd matrix if an element is present for the 3rd+ element because it would perceive the 3rd element as the 2nd. The result is the following rules:
+  * The matrices in a vertical block must be arranged from longest to shortest.
+  * A matrix can't skip an element on one row and resume listing elements later. All elements must be on
+  consecutive rows until all data have been listed.
 
 Syntax format:
   * Line 1: `<type-var-1> <type-var-2> ... <type-var-n>` Declare types.
