@@ -44,7 +44,11 @@ int main(){
 	}else{
 		cout << "Read file..." << endl;
 
+		cout << "+------------ read_test.kv ------------------+" << endl;
+
 		cout << kv.show() << endl;
+
+		cout << "+------------ read_test.kv ------------------+" << endl;
 	}
 
 

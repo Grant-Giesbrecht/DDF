@@ -1577,6 +1577,9 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 				if (is_2dmat[i]){
 					
 					KV2DItem temp;
+					std::vector<double> td;
+					std::vector<bool> tb;
+					std::vector<std::string> ts;
 					
 					if (types[i] == "m<d>"){
 						temp.type = 'd';
@@ -1595,7 +1598,51 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 					//For each line of data for this variable...
 					for (size_t k = 0 ; k < data_str[i].size() ; k++){
 						
+						
+						//Check if marks end of row
+						bool row_end = false;
+						if (data_str[i][k][data_str[i][k].length()-1] == ';'){
+							row_end = true;
+						}
+						
+						//Translate data string and save into kv-item
+						if (types[i] == "m<d>"){
+							try{
+								td.push_back(stod(data_str[i][k]));
+							 }catch(...){
+								err_str = "Failed on line " + std::to_string(line_nums[l]) + ".\n\tFailed to convert '" + data_str[i][k] + "' to a double.";
+								return false;
+							}
+							if (row_end){
+								temp.md2.push_back(td);
+								td.clear();
+							}
+						}else if(types[i] == "m<s>"){
+							ts.push_back(data_str[i][k]);
+							if (row_end){
+								temp.ms2.push_back(ts);
+								ts.clear();
+							}
+						}else{ //bool
+							tb.push_back( gstd::to_bool(data_str[i][k]) );
+							
+							if (row_end){
+								temp.mb2.push_back(tb);
+								tb.clear();
+							}
+						}
 					}
+					
+					//Add last row...
+					if (types[i] == "m<d>" && td.size() > 0){
+						temp.md2.push_back(td);
+					}else if(types[i] == "m<s>" && ts.size() > 0){
+						temp.ms2.push_back(ts);
+					}else if(types[i] == "m<b>" && tb.size() > 0){
+						temp.mb2.push_back(tb);
+					}
+					
+					variables2D.push_back(temp);
 					
 				}else{
 					
@@ -1799,11 +1846,11 @@ std::string KVFile::show(){
 
 	std::string out = "";
 
-
-
 	out = "No. Variables: " + std::to_string(numVar());
 	out = out + "\nFlat Variables:\n";
 
+	size_t trim_len = 45;
+	
 	if (variablesFlat.size() > 0){
 		KTable flat_vars;
 		flat_vars.table_title("Flat Variables");
@@ -1839,7 +1886,7 @@ std::string KVFile::show(){
 		flat_vars.alignh('l');
 		flat_vars.alignc('l');
 		flat_vars.alignc(3, 'l');
-		flat_vars.trimc('c', 25);
+		flat_vars.trimc('c', trim_len);
 		out = out + flat_vars.str();
 	}
 
@@ -1889,7 +1936,7 @@ std::string KVFile::show(){
 		m1d_vars.alignh('l');
 		m1d_vars.alignc('l');
 		m1d_vars.alignc(3, 'l');
-		m1d_vars.trimc('c', 25);
+		m1d_vars.trimc('c', trim_len);
 		out = out + m1d_vars.str();
 	}
 
@@ -1957,7 +2004,7 @@ std::string KVFile::show(){
 		m2d_vars.alignh('l');
 		m2d_vars.alignc('l');
 		m2d_vars.alignc(3, 'l');
-		m2d_vars.trimc('c', 25);
+		m2d_vars.trimc('c', trim_len);
 		out = out + m2d_vars.str();
 	}
 
