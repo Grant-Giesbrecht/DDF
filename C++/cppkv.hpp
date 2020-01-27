@@ -1443,7 +1443,200 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 				variables2D.push_back(temp);
 			}
 
+		}else if(words[0].str == "#VERTICAL"){
 
+			std::vector<std::string> vert_block; //Clear header
+			std::vector<size_t> line_nums;
+			size_t openedOnLine = lineNum;
+
+			bool foundBlock = false;
+			while (getline(file, line)){ //Keep reading lines until closing vert block found
+
+				lineNum++;
+
+				//Break line into words...
+				std::vector<gstd::string_idx> words = gstd::parseIdx(line, " \t", ";");
+
+				if (words.size() < 1) continue; //Skip blank lines
+				
+				if (words[0].str.length() >= 2 && words[0].str.substr(0, 2) == "//") continue; //Skip comments
+
+				if(words[0].str == "#VERTICAL"){ //Is a closing block statement
+					foundBlock = true;
+					break;
+				}else{ //Is part of the block...
+
+					//Trim inline comments
+					std::string comment_trimmed_line = line;
+					for (size_t l = 1 ; l+1 < line.length() ; l++){ //Can't be first character - comments starting with first character were removed along with blank lines
+						if (line.substr(l, 2) == "//"){
+							comment_trimmed_line = line.substr(0, l);
+						}
+					}
+					
+					//Push line w/ comment removed back
+					vert_block.push_back(comment_trimmed_line);
+					line_nums.push_back(lineNum);
+
+				}
+
+			}
+
+			//Ensure end of file was not reached before header found
+			if (!foundBlock){
+				err_str = "Failed on line " + std::to_string(openedOnLine) + ".\n\tFailed to find closing #VERTICAL statement.";
+				return false;
+			}
+			
+			//The vertical block has now been read into vert_block vector - time to parse it into the following vectors
+			
+			if (vert_block.size() < 3){
+				err_str = "Failed in vertical block beginning on line " + std::to_string(openedOnLine) + ".\n\tFound fewer than three non-blank lines.";
+				return false;
+			}
+			
+			std::vector<std::string> types = gstd::parse(vert_block[0], " \t"); //Read variable types from first line
+			std::vector<std::string> names = gstd::parse(vert_block[1], " \t"); //Read variable names from 2nd line
+			std::vector<std::string> descs;
+			
+			//Check if descriptions are present
+			std::string desc_line = vert_block[2];
+			gstd::trim_whitespace(vert_block[2]); //Remove whitespace from start + end, '?' must be first char if desc line
+			if (desc_line.length() >= 1 && desc_line[0] == '?'){
+				
+				//Read description line
+				descs = gstd::parse(vert_block[2], "?"); //Read descriptions from 3rd line
+				for (size_t e = 0 ; e < descs.size() ; e++){ //Remove trailing whitespace from descriptions
+					gstd::trim_whitespace(descs[e]);
+				}
+				
+			}
+			
+			//Check for errors in type, name, or quantities
+			if (types.size() != names.size() || (descs.size() > 0 && descs.size() != types.size())){ //Check that types, names, and descs (if present) are the same size
+				err_str = "Failed on line " + std::to_string(line_nums[0]) + ".\n\tNumber of type declarations, names, and descriptions (if present) must match.";
+				return false;
+			}
+			
+			//For each variable name & type...
+			for (size_t i = 0 ; i < names.size() ; i++){
+				
+				//Ensure variable name is valid
+				if (!isValidName(names[i])){
+					err_str = "Failed on line " + std::to_string(line_nums[1]) + ".\n\tVariable name '" + names[i] + "' is invalid.";
+					return false;
+				}
+				
+				//Ensure type is valid
+				if (types[i] != "m<d>" && types[i] != "m<s>" && types[i] != "m<b>"){
+					err_str = "Failed on line " + std::to_string(line_nums[0]) + ".\n\tType '" + types[i] + "' is invalid.";
+					return false;
+				}
+			}
+			
+			//Initialize the 2D vector of string data contents for each matrix detected
+			std::vector<std::vector<std::string> > data_str;
+			std::vector<bool> is_2dmat;
+			for (size_t i = 0 ; i < names.size() ; i++){
+				std::vector<std::string> temp_vs;
+				data_str.push_back(temp_vs);
+				is_2dmat.push_back(false);
+			}
+			
+			
+			//Go through data line by line and add contents to string vectors
+			std::vector<std::string> words;
+			size_t max_allowed = names.size();
+			size_t l = 2;
+			if (descs.size() > 0) l++;
+			for (; l < vert_block.size() ; l++){
+				
+				words = gstd::parse(vert_block[l], " \t", "", true); //Parse tokens via whitespace, but preserve strings as one token
+				
+				//Check that a matrix didn't omit data one line, then bring it back the next
+				if (words.size() > max_allowed){
+					err_str = "Failed on line " + std::to_string(line_nums[l]) + ".\n\tToo many characters detected.";
+					return false;
+				}
+				
+				//Update maximum No. allowed tokens
+				if (words.size() < max_allowed) max_allowed = words.size();
+				
+				//For each token, add to corresponding string data vector
+				for (size_t i = 0 ; i < words.size() ; i++){
+					data_str[i].push_back(words[i]);
+					if (words[i][words[i].length()-1] == ';'){
+						is_2dmat[i] = true;
+					}
+				}
+				
+			}
+			
+			//Create variable struct
+			for (size_t i = 0 ; i < names.size() ; i++){
+				if (is_2dmat[i]){
+					
+					KV2DItem temp;
+					
+					if (types[i] == "m<d>"){
+						temp.type = 'd';
+					}else if(types[i] == "m<s>"){
+						temp.type = 's';
+					}else{ //bool
+						temp.type = 'b';
+					}
+					
+					temp.name = names[i];
+					
+					if (descs.size() > 0){
+						temp.description = descs[i];
+					}
+					
+					//For each line of data for this variable...
+					for (size_t k = 0 ; k < data_str[i].size() ; k++){
+						
+					}
+					
+				}else{
+					
+					KV1DItem temp;
+					
+					if (types[i] == "m<d>"){
+						temp.type = 'd';
+					}else if(types[i] == "m<s>"){
+						temp.type = 's';
+					}else{ //bool
+						temp.type = 'b';
+					}
+					
+					temp.name = names[i];
+					
+					if (descs.size() > 0){
+						temp.description = descs[i];
+					}
+					
+					//For each line of data for this variable...
+					for (size_t k = 0 ; k < data_str[i].size() ; k++){
+						if (types[i] == "m<d>"){
+							try{
+								temp.md.push_back(stod(data_str[i][k]));
+							 }catch(...){
+								err_str = "Failed on line " + std::to_string(line_nums[l]) + ".\n\tFailed to convert '" + data_str[i][k] + "' to a double.";
+								return false;
+							}
+						}else if(types[i] == "m<s>"){
+							temp.ms.push_back(data_str[i][k]);
+						}else{ //bool
+							temp.mb.push_back( gstd::to_bool(data_str[i][k]) );
+						}
+					}
+					
+					variables1D.push_back(temp);
+				}
+				
+			}
+			
+			
 
 		}else{
 			err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tUnidentified token '" + words[0].str + "'";
