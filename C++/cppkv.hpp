@@ -1458,7 +1458,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 				std::vector<gstd::string_idx> words = gstd::parseIdx(line, " \t", ";");
 
 				if (words.size() < 1) continue; //Skip blank lines
-				
+
 				if (words[0].str.length() >= 2 && words[0].str.substr(0, 2) == "//") continue; //Skip comments
 
 				if(words[0].str == "#VERTICAL"){ //Is a closing block statement
@@ -1473,7 +1473,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 							comment_trimmed_line = line.substr(0, l);
 						}
 					}
-					
+
 					//Push line w/ comment removed back
 					vert_block.push_back(comment_trimmed_line);
 					line_nums.push_back(lineNum);
@@ -1487,53 +1487,53 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 				err_str = "Failed on line " + std::to_string(openedOnLine) + ".\n\tFailed to find closing #VERTICAL statement.";
 				return false;
 			}
-			
-			//The vertical block has now been read into vert_block vector - time to parse it into the following vectors
-			
+
+			//The vertical block has now been read into vert_block vector - time to process it further...
+
 			if (vert_block.size() < 3){
 				err_str = "Failed in vertical block beginning on line " + std::to_string(openedOnLine) + ".\n\tFound fewer than three non-blank lines.";
 				return false;
 			}
-			
+
 			std::vector<std::string> types = gstd::parse(vert_block[0], " \t"); //Read variable types from first line
 			std::vector<std::string> names = gstd::parse(vert_block[1], " \t"); //Read variable names from 2nd line
 			std::vector<std::string> descs;
-			
+
 			//Check if descriptions are present
 			std::string desc_line = vert_block[2];
 			gstd::trim_whitespace(vert_block[2]); //Remove whitespace from start + end, '?' must be first char if desc line
 			if (desc_line.length() >= 1 && desc_line[0] == '?'){
-				
+
 				//Read description line
 				descs = gstd::parse(vert_block[2], "?"); //Read descriptions from 3rd line
 				for (size_t e = 0 ; e < descs.size() ; e++){ //Remove trailing whitespace from descriptions
 					gstd::trim_whitespace(descs[e]);
 				}
-				
+
 			}
-			
+
 			//Check for errors in type, name, or quantities
 			if (types.size() != names.size() || (descs.size() > 0 && descs.size() != types.size())){ //Check that types, names, and descs (if present) are the same size
 				err_str = "Failed on line " + std::to_string(line_nums[0]) + ".\n\tNumber of type declarations, names, and descriptions (if present) must match.";
 				return false;
 			}
-			
+
 			//For each variable name & type...
 			for (size_t i = 0 ; i < names.size() ; i++){
-				
+
 				//Ensure variable name is valid
 				if (!isValidName(names[i])){
 					err_str = "Failed on line " + std::to_string(line_nums[1]) + ".\n\tVariable name '" + names[i] + "' is invalid.";
 					return false;
 				}
-				
+
 				//Ensure type is valid
 				if (types[i] != "m<d>" && types[i] != "m<s>" && types[i] != "m<b>"){
 					err_str = "Failed on line " + std::to_string(line_nums[0]) + ".\n\tType '" + types[i] + "' is invalid.";
 					return false;
 				}
 			}
-			
+
 			//Initialize the 2D vector of string data contents for each matrix detected
 			std::vector<std::vector<std::string> > data_str;
 			std::vector<bool> is_2dmat;
@@ -1542,26 +1542,26 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 				data_str.push_back(temp_vs);
 				is_2dmat.push_back(false);
 			}
-			
-			
+
+
 			//Go through data line by line and add contents to string vectors
 			std::vector<std::string> words;
 			size_t max_allowed = names.size();
 			size_t l = 2;
 			if (descs.size() > 0) l++;
 			for (; l < vert_block.size() ; l++){
-				
+
 				words = gstd::parse(vert_block[l], " \t", "", true); //Parse tokens via whitespace, but preserve strings as one token
-				
+
 				//Check that a matrix didn't omit data one line, then bring it back the next
 				if (words.size() > max_allowed){
 					err_str = "Failed on line " + std::to_string(line_nums[l]) + ".\n\tToo many characters detected.";
 					return false;
 				}
-				
+
 				//Update maximum No. allowed tokens
 				if (words.size() < max_allowed) max_allowed = words.size();
-				
+
 				//For each token, add to corresponding string data vector
 				for (size_t i = 0 ; i < words.size() ; i++){
 					data_str[i].push_back(words[i]);
@@ -1569,18 +1569,18 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 						is_2dmat[i] = true;
 					}
 				}
-				
+
 			}
-			
+
 			//Create variable struct
 			for (size_t i = 0 ; i < names.size() ; i++){
 				if (is_2dmat[i]){
-					
+
 					KV2DItem temp;
 					std::vector<double> td;
 					std::vector<bool> tb;
 					std::vector<std::string> ts;
-					
+
 					if (types[i] == "m<d>"){
 						temp.type = 'd';
 					}else if(types[i] == "m<s>"){
@@ -1588,29 +1588,31 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 					}else{ //bool
 						temp.type = 'b';
 					}
-					
+
 					temp.name = names[i];
-					
+
 					if (descs.size() > 0){
 						temp.description = descs[i];
 					}
-					
+
 					//For each line of data for this variable...
 					for (size_t k = 0 ; k < data_str[i].size() ; k++){
-						
-						
+
+
 						//Check if marks end of row
 						bool row_end = false;
+						std::string data_str_wo_semicolon = data_str[i][k];
 						if (data_str[i][k][data_str[i][k].length()-1] == ';'){
 							row_end = true;
+							data_str_wo_semicolon = data_str[i][k].substr(0, data_str[i][k].length()-1); //Remove semicolon so it doesnt mess up data conversion
 						}
-						
+
 						//Translate data string and save into kv-item
 						if (types[i] == "m<d>"){
 							try{
-								td.push_back(stod(data_str[i][k]));
+								td.push_back(stod(data_str_wo_semicolon));
 							 }catch(...){
-								err_str = "Failed on line " + std::to_string(line_nums[l]) + ".\n\tFailed to convert '" + data_str[i][k] + "' to a double.";
+								err_str = "Failed on line " + std::to_string(line_nums[l]) + ".\n\tFailed to convert '" + data_str_wo_semicolon + "' to a double.";
 								return false;
 							}
 							if (row_end){
@@ -1618,21 +1620,21 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 								td.clear();
 							}
 						}else if(types[i] == "m<s>"){
-							ts.push_back(data_str[i][k]);
+							ts.push_back(data_str_wo_semicolon);
 							if (row_end){
 								temp.ms2.push_back(ts);
 								ts.clear();
 							}
 						}else{ //bool
-							tb.push_back( gstd::to_bool(data_str[i][k]) );
-							
+							tb.push_back( gstd::to_bool(data_str_wo_semicolon) );
+
 							if (row_end){
 								temp.mb2.push_back(tb);
 								tb.clear();
 							}
 						}
 					}
-					
+
 					//Add last row...
 					if (types[i] == "m<d>" && td.size() > 0){
 						temp.md2.push_back(td);
@@ -1641,13 +1643,13 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 					}else if(types[i] == "m<b>" && tb.size() > 0){
 						temp.mb2.push_back(tb);
 					}
-					
+
 					variables2D.push_back(temp);
-					
+
 				}else{
-					
+
 					KV1DItem temp;
-					
+
 					if (types[i] == "m<d>"){
 						temp.type = 'd';
 					}else if(types[i] == "m<s>"){
@@ -1655,13 +1657,13 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 					}else{ //bool
 						temp.type = 'b';
 					}
-					
+
 					temp.name = names[i];
-					
+
 					if (descs.size() > 0){
 						temp.description = descs[i];
 					}
-					
+
 					//For each line of data for this variable...
 					for (size_t k = 0 ; k < data_str[i].size() ; k++){
 						if (types[i] == "m<d>"){
@@ -1677,13 +1679,13 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 							temp.mb.push_back( gstd::to_bool(data_str[i][k]) );
 						}
 					}
-					
+
 					variables1D.push_back(temp);
 				}
-				
+
 			}
-			
-			
+
+
 
 		}else{
 			err_str = "Failed on line " + std::to_string(lineNum) + ".\n\tUnidentified token '" + words[0].str + "'";
@@ -1850,7 +1852,7 @@ std::string KVFile::show(){
 	out = out + "\nFlat Variables:\n";
 
 	size_t trim_len = 45;
-	
+
 	if (variablesFlat.size() > 0){
 		KTable flat_vars;
 		flat_vars.table_title("Flat Variables");
