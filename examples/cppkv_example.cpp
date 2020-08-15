@@ -38,7 +38,7 @@ int main(){
 	cout << "\nNo. Variables: " << to_string(kv.numVar()) << endl;
 	cout << "Variables:\n\t" << kv.names("mt")[0] << endl;
 
-	if (!kv.read("../C++/read_test.kv")){
+	if (!kv.read("../examples/read_test.kv")){
 		cout << "Failed to read file." << endl;
 		cout << kv.err() << endl;
 	}else{
