@@ -9,7 +9,7 @@
 #include <fstream>
 #include <regex>
 #include <gstd/gstd.hpp>
-#include <KTable/ktable.hpp>
+#include <ktable.hpp>
 
 #define CURRENT_VERSION 2.0
 
