@@ -1669,7 +1669,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 								return false;
 							}
 						}else if(types[i] == "m<s>"){
-							temp.ms.push_back(data_str[i][k]);
+							temp.ms.push_back(data_str[i][k].substr(1, data_str[i][k].length()-2));
 						}else{ //bool
 							temp.mb.push_back( gstd::to_bool(data_str[i][k]) );
 						}
