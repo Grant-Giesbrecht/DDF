@@ -1191,8 +1191,6 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 				}
 
 				std::string mat_str = line.substr(start+1, end-start-1);
-				std::cout << mat_str << std::endl;
-
 
 				try{
 					temp.mb = gstd::to_bvec(mat_str);
@@ -1245,8 +1243,6 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 				}
 
 				std::string mat_str = line.substr(start+1, end-start-1);
-				std::cout << mat_str << std::endl;
-
 
 				try{
 					temp.ms = gstd::to_svec(mat_str);
@@ -1284,6 +1280,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 				}
 
 				variables1D.push_back(temp);
+
 			}else if(words[0].str == "m<d>"){ //Double matrix 2D
 
 				KV2DItem temp;
@@ -1402,8 +1399,6 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 				}
 
 				std::string mat_str = line.substr(start+1, end-start-1);
-				std::cout << mat_str << std::endl;
-
 
 				try{
 					temp.ms2 = gstd::to_svec2D(mat_str);
