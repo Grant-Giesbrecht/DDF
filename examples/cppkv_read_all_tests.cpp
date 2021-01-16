@@ -16,6 +16,9 @@ int main(){
 	KVFile kv;
 
 	for (size_t i = 0 ; i < test_files.size() ; i++){
+
+		cout << " ****************** Testing " << test_files[i] << " **************** " << endl;
+
 		if (!kv.read(test_files[i])){
 			cout << "Failed to read file '" << test_files[i] << "'." << endl;
 			cout << kv.err() << endl;
