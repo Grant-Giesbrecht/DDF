@@ -1615,7 +1615,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 								td.clear();
 							}
 						}else if(types[i] == "m<s>"){
-							ts.push_back(data_str_wo_semicolon);
+							ts.push_back(data_str_wo_semicolon.substr(1, data_str_wo_semicolon.length()-2));
 							if (row_end){
 								temp.ms2.push_back(ts);
 								ts.clear();
@@ -1965,14 +1965,14 @@ std::string KVFile::show(){
 					typecode = "string";
 					for (k = 0 ; k < variables2D[i].ms2.size()-1 ; k++){
 						for (j = 0 ; j < variables2D[i].ms2[k].size()-1 ; j++){
-							val_str = val_str + (variables2D[i].ms2[k][j]) + ", ";
+							val_str = val_str + "\"" + (variables2D[i].ms2[k][j]) + "\", ";
 						}
-						val_str = val_str + (variables2D[i].ms2[k][j]) + " ; ";
+						val_str = val_str + "\"" + (variables2D[i].ms2[k][j]) + "\" ; ";
 					}
 					for (j = 0 ; j < variables2D[i].ms2[k].size()-1 ; j++){
-						val_str = val_str + (variables2D[i].ms2[k][j]) + ", ";
+						val_str = val_str + "\"" + (variables2D[i].ms2[k][j]) + "\", ";
 					}
-					val_str = val_str + (variables2D[i].ms2[k][j]);
+					val_str = val_str + "\"" + (variables2D[i].ms2[k][j]) + "\"";
 					break;
 				case('b'):
 					typecode = "bool";
