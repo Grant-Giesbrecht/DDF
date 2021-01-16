@@ -1615,7 +1615,8 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 								td.clear();
 							}
 						}else if(types[i] == "m<s>"){
-							ts.push_back(data_str_wo_semicolon.substr(1, data_str_wo_semicolon.length()-2));
+							size_t pos;
+							ts.push_back(gstd::get_string(data_str_wo_semicolon, pos));
 							if (row_end){
 								temp.ms2.push_back(ts);
 								ts.clear();
@@ -1669,7 +1670,8 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 								return false;
 							}
 						}else if(types[i] == "m<s>"){
-							temp.ms.push_back(data_str[i][k].substr(1, data_str[i][k].length()-2));
+							size_t pos;
+							temp.ms.push_back(gstd::get_string(data_str[i][k], pos));
 						}else{ //bool
 							temp.mb.push_back( gstd::to_bool(data_str[i][k]) );
 						}
