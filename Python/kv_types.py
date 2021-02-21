@@ -26,6 +26,22 @@ class KvItem():
 			self.val = td[0]
 			self.dimension = -1
 
+	def __str__(self):
+
+		max_desc_len = 20
+
+		typesym = getTypeSymbol(self.dimension, self.type)
+
+		descstr = ""
+		if len(self.desc) > 0:
+			if len(self.desc) > max_desc_len:
+				descstr = self.desc[0:max_desc_len-3] + "..."
+			else:
+				descstr = self.desc
+			descstr = f", (\"{descstr}\")"
+
+		return f"<KvItem({typesym}) {self.name}={self.val}{descstr}>"
+
 def getType(value):
 
 	it_val = value
@@ -52,3 +68,21 @@ def getType(value):
 		return (depth, BOOL)
 	else:
 		return (f"Unrecognized type {T}.", ERR)
+
+def getTypeSymbol(depth, type):
+
+	if type == DOUBLE:
+		base_sym = 'd'
+	elif type == BOOL:
+		base_sym = 'b'
+	elif base_sym == STRING:
+		base_sym = 's'
+	else:
+		return "?"
+
+	if depth == 0:
+		return base_sym
+	elif depth == 1 or depth == 2:
+		return f"m<{base_sym}>"
+	else:
+		return "?<?>"
