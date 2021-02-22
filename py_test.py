@@ -13,3 +13,8 @@ if not kv.add([1], "pi"):
 print(kv("pi"))
 print(kv("Vin"))
 print(kv("Vin_t"))
+kv.clear()
+kv.readKV1_V2("./examples/read_test.kv")
+print("\n")
+print(f"Version: {kv.getVersion()}")
+print(f"\"{kv.getHeader()}\"")

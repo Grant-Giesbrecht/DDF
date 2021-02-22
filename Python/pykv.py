@@ -121,9 +121,82 @@ class KVFile:
 
 	#************************** FILE I/O **************************************#
 
-	def readKV1_V2(fileIn:str, options:str=""):
+	def readKV1_V2(self, fileIn:str, options:str=""):
 
 		with open(fileIn) as file:
-			line = file.readline()
 
-			words = line.split()
+			lnum = 0
+
+			while True:
+				lnum += 1
+
+				line = file.readline()
+				if not line:
+					break
+
+				#Remove newline characters
+				if line[-1] == '\n':
+					line = line[0:-1]
+
+				#Parse words
+				words = parseIdx(line, " \t")
+
+				#Skip blank lines
+				if len(words) < 1:
+					continue
+
+				if words[0].str == "#VERSION": #Version Statement
+
+					#Ensure 2 words present
+					if len(words) != 2:
+						self.logErr(f"Failed on line {lnum}. Version state requires exactly 2 words")
+						return False
+
+					#Read version statement
+					try:
+						self.fileVersion = float(words[1].str)
+					except:
+						x = words[1].str
+						self.logErr(f"Failed on line {lnum}. Failed to convert version '{x}' to float.")
+						return False
+
+				elif words[0].str == "#HEADER":
+
+					self.header = ""; #Clear header
+					openedOnLine = lnum
+
+					foundHeader = False
+
+					#Keep reading lines until closing header found
+					while True:
+						lnum += 1
+
+						line = file.readline()
+						if not line:
+							break
+
+						#Remove newline characters
+						if line[-1] == '\n':
+							line = line[0:-1]
+
+						#Parse words
+						words = parseIdx(line, " \t")
+
+						if len(words) < 1:
+							self.header = self.header + "\n"
+							continue
+
+						if words[0].str == "#HEADER":
+							foundHeader = True
+							break
+						else:
+							if len(self.header) == 0:
+								self.header = line
+							else:
+								self.header = self.header + "\n" + line
+
+					if not foundHeader:
+						self.logErr(f"Failed on line {openedOnLine}, failed to find closing #HEADER statement.")
+						return False
+				elif words[0].str == '//':
+					continue
