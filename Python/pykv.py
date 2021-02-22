@@ -1,5 +1,5 @@
 from .kv_types import *
-
+from .helpers import *
 class KVFile:
 
 	#***************** INITIALIZERS *******************************************#
@@ -107,3 +107,23 @@ class KVFile:
 			return self.error_messages[-1]
 		else:
 			return "No errors"
+
+	#*************************** HEADER ***************************************#
+
+	def setHeader(self, h:str):
+		self.header = h
+
+	def getHeader(self):
+		return self.header
+
+	def getVersion(self):
+		return self.fileVersion
+
+	#************************** FILE I/O **************************************#
+
+	def readKV1_V2(fileIn:str, options:str=""):
+
+		with open(fileIn) as file:
+			line = file.readline()
+
+			words = line.split()

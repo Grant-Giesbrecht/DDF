@@ -8,6 +8,17 @@ FLAT = 0
 M1D = 1
 M2D = 2
 
+class StringIdx():
+	def __init__(self, val:str, idx:int):
+		self.str = val
+		self.idx = idx
+
+	def __str__(self):
+		return f"[{self.idx}]\"{self.str}\""
+
+	def __repr__(self):
+		return self.__str__()
+
 class KvItem():
 
 	def __init__(self, value, name:str, desc:str=""):
