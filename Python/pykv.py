@@ -95,6 +95,11 @@ class KVFile:
 		""" Gets the number of variables currently saved in the object """
 		return len(self.varsFlat)+len(self.vars1D)+len(self.vars2D)
 
+	def show(self):
+
+		for v in self.vars1D:
+			print(v)
+
 	#*************************** ERROR RECORD ********************************#
 
 	def logErr(self, msg:str):
@@ -118,6 +123,21 @@ class KVFile:
 
 	def getVersion(self):
 		return self.fileVersion
+
+	#************************ OTHER ******************************************#
+
+	def isValidName(self, name:str):
+		if len(name) < 1:
+			return False
+
+		if not name.isalpha():
+			return False
+
+		for c in name:
+			if c.isspace():
+				return False
+
+		return True
 
 	#************************** FILE I/O **************************************#
 
@@ -200,3 +220,44 @@ class KVFile:
 						return False
 				elif words[0].str == '//':
 					continue
+				elif words[0].str == 'd' or words[0].str == 's' or words[0].str == 'b' or words[0].str == 'm<d>' or words[0].str == 'm<s>' or words[0].str == 'm<b>':
+
+					if len(words) < 3:
+						self.logErr(f"Failed on line {lnum}. Insufficient number of tokens for inline variable statement.")
+						return false;
+
+					if (not self.isValidName(words[1].str)):
+						badname = words[1].str
+						self.logErr(f"Failed on line {lnum}. Invalid variable name '{badname}'.")
+
+					#Read value
+					optional_features_start = 3
+					if words[0].str == 'd':
+
+						try:
+							val = float(words[2].str)
+						except:
+							badval = words[2].str
+							self.logErr(f"Failed on line {lnum}. Failed to convert value '{badval}' to float.")
+							return False
+						optional_features_start = 3;
+
+						temp = KvItem(val, words[1].str)
+
+						#Read optional arguments/features
+						allow_semi = True
+						in_desc = False
+						for wd in words[optional_features_start:]:
+
+							if wd.str == ';':
+								if not allow_semi:
+									self.logErr(f"Failed on line {lnum}. Detected excessive semicolons.")
+									return False
+								allow_semi = False
+							elif (wd.str == '?' or (len(wd.str) > 0 and wd.str[0] == '?')):
+								in_desc = True
+								temp.desc = line[wd.idx-len(wd.str)-2]
+							elif wd.str == '//':
+								break #Rest is a comment
+
+					self.vars1D.append(temp)
