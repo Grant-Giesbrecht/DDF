@@ -111,6 +111,32 @@ classdef KvFile < handle
 			obj.header = hstr;
 		end %*************************** END setHeader() ******************
 		
+        function redaKV1_V2(obj, fileIn, options)
+           
+            line_num = 0;
+
+            %Open file
+            fid = fopen(fileIn);
+
+            %Read file line by line
+            while(~feof(fid)) %- - - - - - - Loop Through File - - - - - - 
+                
+                sline = fgetl(fid); %Read line
+                line_num = line_num+1; %Increment Line Number
+
+                %Note: char(9) is the tab character
+                words = strsplit(sline, {' ', ']', '[', ';', ',', char(9)}, 'CollapseDelimiters', true); 
+                
+            end %- - - - - - - - - - - - END Loop Through File - - - - - - 
+        end
+        
+        
+        
+        
+        
+        
+        
+        
 	end   %************************ END METHODS ***************************
 end
 
