@@ -2,4 +2,5 @@
 cppkv_example
 cppkv_read_all_tests
 *.m~
-*__pycache__/
+*.asv
+*__pycache__/*
