@@ -966,6 +966,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 				gstd::ensure_whitespace(line, ";"); //Ensure semicolons are picked up as tokens
 				words = gstd::parseIdx(line, " \t");
 
+				//TODO: Should I remove this so blank spaces in header are kept?
 				if (words.size() < 1) continue; //Skip blank lines
 
 				if(words[0].str == "#HEADER"){ //Is a closing header statement
