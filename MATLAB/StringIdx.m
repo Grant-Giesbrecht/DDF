@@ -5,7 +5,7 @@ classdef StringIdx
 	end
 	methods
 		function obj=StringIdx(val, start_idx)
-			obj.str = val;
+			obj.str = string(val);
 			obj.idx = start_idx;
 		end
 	end
