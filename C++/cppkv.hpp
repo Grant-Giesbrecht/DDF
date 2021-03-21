@@ -1036,7 +1036,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 						allow_semi = false;
 					}else if(words[i].str == "?" || (words[i].str.length() > 0 && words[i].str[0] == '?')){
 						in_desc = true;
-						temp.description = line.substr(words[i].idx-words[i].str.length()+2); //The description is the string of characters starting immediately after the questionmark
+						temp.description = line.substr(words[i].idx-words[i].str.length()+2); //The description is the string of characters starting immediately after the questionmark TODO: this likely includes comments as well. Instead of handling comments as they come up, why not run over the document once and purge all inline comments.
 					}else if(words[i].str == "//"){
 						break; //the rest is a comment - exit loop
 					}
