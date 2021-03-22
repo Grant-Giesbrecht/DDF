@@ -123,7 +123,7 @@ public:
 
 	//********** FILE I/O
 
-	std::string swrite(std::string fileOut, std::string options="");
+	std::string swrite(std::string fileOut, std::string options=""); //TODO: swrite should not have a 'fileOut' parameter
 	bool write(std::string fileOut, std::string options="");
 	bool read(std::string fileIn, std::string options="");
 	bool readKV1_V2(std::string fileIn, std::string options="");
