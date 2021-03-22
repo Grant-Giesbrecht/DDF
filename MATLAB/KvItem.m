@@ -5,6 +5,7 @@ classdef KvItem < handle
 		val
 		name
 		desc
+		count
 	end		 % ************* END PROPERTIES *****************
 	
 	methods  % ************* METHODS ************************
@@ -13,8 +14,9 @@ classdef KvItem < handle
 			
 			%Get value, name, and description
 			obj.val = value;
-			obj.name = name;
-			obj.desc = desc;
+			obj.name = string(name);
+			obj.desc = string(desc);
+			obj.count = numel(obj.val);
 			if isa(value,'double')
 				obj.type = "d";
 			elseif isa(value,'string')
@@ -38,11 +40,97 @@ classdef KvItem < handle
 				if size(value, 1) == 1 && size(value, 2) == 1
 					obj.dimension = 1;
 				else
-					obj.dimension = 2;
+					s = size(value);
+					if s(1) == 1
+						obj.dimension = 2;
+					else
+						obj.dimension = 3;
+					end
 				end
 			end
 			
 		end % ************* END CONSTRUCTOR ********************
+		
+		function valstr=getValueStr(obj)
+			
+			obj.dimension
+			
+			if obj.dimension == 2 %If a 1D matrix
+				disp("1D");
+				%Start with blank string
+				valstr = "";
+				
+				%Add each element
+				for e=obj.val
+					%Add comma if required
+					if valstr ~= ""
+						valstr = strcat(valstr, ", ");
+					end
+					
+					valstr = strcat(valstr, obj.getElementStr(e));
+				end
+				
+				valstr = strcat("[", valstr, "]");
+				
+			elseif obj.dimension == 3 %If a 2D matrix
+				
+				%Get size
+				dim = size(obj.val);
+				
+				matstr = "";
+				
+				%For each row
+				for r_idx=1:dim(1)
+					
+					%Get row
+					row = obj.val(r_idx,:);
+					
+					if matstr ~= ""
+						matstr = strcat(matstr, "; ");
+					end
+					
+					%Create row string same way create 1D array string
+					
+					%Start with blank string
+					valstr = "";
+					
+					%Add each element of the row
+					for e=row
+						%Add comma if required
+						if valstr ~= ""
+							valstr = strcat(valstr, ", ");
+						end
+
+						valstr = strcat(valstr, obj.getElementStr(e));
+					end
+					
+					matstr = strcat(matstr, valstr);
+				end
+				
+				valstr = strcat("[", matstr, "]");
+				
+			else %Else return element string
+				valstr = obj.getElementStr(obj.val);
+			end
+			
+		end
+		
+		function valstr=getElementStr(obj, e)
+			%Get string for value
+			if obj.type == "d"
+				valstr = num2str(e); %TODO: MOdify format specification
+			elseif obj.type == "s"
+				valstr = strcat('"', e, '"');
+			elseif obj.type == "b"
+				valstr = logical2str(e);
+			else
+				valstr = "ERROR";
+			end
+		end
+		
+		function updateCount(obj)
+			obj.count = numel(obj.val);
+		end
 		
 		function strout=getTypeStr(obj)
 			if obj.dimension > 1
