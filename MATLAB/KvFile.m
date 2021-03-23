@@ -86,15 +86,15 @@ classdef KvFile < handle
 		
 		function logErr(obj, msg) %************** logErr() ****************
 			if length(obj.error_messages) == 0
-				obj.error_messages = strcat('ERROR: ', msg);
+				obj.error_messages = strcat("ERROR: ", msg);
 				return;
 			end
-			obj.error_messages(end+1) = strcat('ERROR: ', msg);
+			obj.error_messages(end+1) = strcat("ERROR: ", msg);
 		end %****************************** END logErr() ******************
 		
 		function logErrLn(obj, msg, lnum) %************** logErrLn() ******
 			
-			err_msg = strcat('Failed on line ', string(lnum), '. ', msg);
+			err_msg = strcat("(line ", string(lnum), ") ", msg);
 			obj.logErr(err_msg);
 			
 		end %**************************** END logErrLn() ******************
@@ -479,6 +479,65 @@ classdef KvFile < handle
 						else
 							obj.varsFlat(end+1) = temp;
 						end
+						
+					else %is m<X>
+						
+						%Create new KvItem
+						temp = KvItem("", words(2).str, "");
+						type = "";
+						if ~isempty(find(char(words(1).str)=='d', 1))
+							temp.type = "d";
+						elseif ~isempty(find(char(words(1).str)=='s', 1))
+							temp.type = "s";
+						elseif ~isempty(find(char(words(1).str)=='b', 1))
+							temp.type = "b";
+						else
+							obj.logErrLn(strcat("Failed to identiy matrix type ", words(1).str ), lnum);
+							return;
+						end
+
+						
+						%Get matrix contents
+						[newmat, endIdx] = getMatrix(sline, temp.type); %TODO: Cannot handle strings in matrix with commas in the strings. Semicolons too.
+						if endIdx == -1
+							obj.logErrLn(strcat("Failed to read matrix value (", newmat , ")"), lnum);
+							return;
+						end
+						temp.val = newmat;
+						temp.updateCount();
+						
+						%Scan through optional features
+						allowSemi = true;
+						remainingwords = parseIdx(sline(endIdx+1:end), strcat(" ", char(9)));
+						for w=remainingwords
+							cstr = char(w.str);
+							if w.str == ";"
+								if ~allowSemi
+									obj.logErrLn('Duplicate semicolons', lnum);
+									return
+								end
+								allowSemi = false;
+							elseif w.str == "?" || cstr(1) == '?'
+								temp.desc = sline(endIdx+1+w.idx:end); %TODO: This will include inline comments. Go through document at beginning and purge all comments
+							elseif w.str == "//"
+								break; %Remainder is comment
+							end
+						end
+						
+						if temp.dimension == 2
+							if isempty(obj.vars1D)
+								obj.vars1D = temp;
+							else
+								obj.vars1D(end+1) = temp;
+							end
+						else
+							if isempty(obj.vars2D)
+								obj.vars2D = temp;
+							else
+								obj.vars2D(end+1) = temp;
+							end
+						end
+						
 						
 					end
 					
