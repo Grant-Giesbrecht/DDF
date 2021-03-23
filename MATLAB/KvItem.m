@@ -130,6 +130,28 @@ classdef KvItem < handle
 		
 		function updateCount(obj)
 			obj.count = numel(obj.val);
+			
+			%Get number of dimensions
+			
+			%ndims gives 2 dimensions even for numeric types (because
+			%everything is a matrix)
+			if ndims(obj.val) > 2
+				obj.dimension = ndims(obj.val);
+			elseif ndims(obj.val) == 2
+				
+				% To see if it's not a matrix, we have to check if it's a 
+				% 1x1 matrix.
+				if size(obj.val, 1) == 1 && size(obj.val, 2) == 1
+					obj.dimension = 1;
+				else
+					s = size(obj.val);
+					if s(1) == 1
+						obj.dimension = 2;
+					else
+						obj.dimension = 3;
+					end
+				end
+			end
 		end
 		
 		function strout=getTypeStr(obj)
