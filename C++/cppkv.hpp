@@ -1455,7 +1455,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 				if (words.size() < 1) continue; //Skip blank lines
 
-				if (words[0].str.length() >= 2 && words[0].str.substr(0, 2) == "//") continue; //Skip comments
+				if (words[0].str.length() >= 2 && words[0].str.substr(0, 2) == "//") continue; //Skip comments TODO: Change comment removal to occur in pass through at beginning of read
 
 				if(words[0].str == "#VERTICAL"){ //Is a closing block statement
 					foundBlock = true;
