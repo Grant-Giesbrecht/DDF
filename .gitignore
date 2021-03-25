@@ -4,3 +4,4 @@ cppkv_read_all_tests
 *.m~
 *.asv
 *__pycache__/*
+Python/__pycache__/
