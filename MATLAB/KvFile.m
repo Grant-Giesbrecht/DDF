@@ -21,7 +21,7 @@ classdef KvFile < handle
 			obj.fileVersion = -1;
 			obj.error_messages = [];
 			obj.current_version = 2;
-			obj.current_version_str = "2.0"
+			obj.current_version_str = "2.0";
 		end %******************************* END INITIALIZER **************
 		
 		function add(obj, newVar, varName, desc) %******** add() **********
@@ -105,6 +105,7 @@ classdef KvFile < handle
 				return;
 			end
 			strout=obj.error_messages(end);
+			obj.error_messages(end) = [];
 		end
 		
 		function n=numVar(obj) %**************** numVar() *****************
@@ -360,10 +361,11 @@ classdef KvFile < handle
 					end
 					
 					%Read version statement
-					obj.fileVersion = str2double(words(1).str);
+					obj.fileVersion = str2double(words(2).str);
 					if isnan(obj.fileVersion)
 						obj.fileVersion = -1;
 						obj.logErrLn('Failed to convert version number to string', lnum);
+						return;
 					end
 				elseif words(1).str == "#HEADER"
 					
@@ -654,8 +656,8 @@ classdef KvFile < handle
 					c=startRow;
 					for l=vertBlock(startRow:end)
 						
-						%Parse line
-						words = parseIdx(l, strcat(" ", string(char(9))));
+						%Parse line without breaking up string
+						words = parseIdx(l, strcat(" ", string(char(9))), true);
 						
 						%Check that matrix didn't omit data one line, then
 						%bring it back later
@@ -686,7 +688,56 @@ classdef KvFile < handle
 						
 						c=c+1;
 					end
-
+					
+					for di=1:length(types)
+						
+						%Create new KvItem
+						temp = KvItem("", words(2).str, "");
+						temp.type = types(di);
+						
+						%Get matrix contents
+						[newmat, endIdx] = getMatrix(data_strs(di), types(di)); %TODO: Cannot handle strings in matrix with commas in the strings. Semicolons too.
+						if endIdx == -1
+							obj.logErrLn(strcat("Failed to read matrix value (", data_strs(di) , ") in vertical block"), openedOnLine);
+							return;
+						end
+						temp.val = newmat;
+						temp.updateCount();
+						
+						%Scan through optional features
+						allowSemi = true;
+						remainingwords = parseIdx(sline(endIdx+1:end), strcat(" ", char(9)));
+						for w=remainingwords
+							cstr = char(w.str);
+							if w.str == ";"
+								if ~allowSemi
+									obj.logErrLn('Duplicate semicolons', lnum);
+									return
+								end
+								allowSemi = false;
+							elseif w.str == "?" || cstr(1) == '?'
+								temp.desc = sline(endIdx+1+w.idx:end); %TODO: This will include inline comments. Go through document at beginning and purge all comments
+							elseif w.str == "//"
+								break; %Remainder is comment
+							end
+						end
+						
+						if temp.dimension == 2
+							if isempty(obj.vars1D)
+								obj.vars1D = temp;
+							else
+								obj.vars1D(end+1) = temp;
+							end
+						else
+							if isempty(obj.vars2D)
+								obj.vars2D = temp;
+							else
+								obj.vars2D(end+1) = temp;
+							end
+						end
+						
+					end
+					
 				end %-------------------- END check match file element ----
                 
             end %- - - - - - - - - - - - END Loop Through File - - - - - - 
