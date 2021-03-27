@@ -727,11 +727,11 @@ classdef KvFile < handle
 					for di=1:length(types)
 
 						%Create new KvItem
-						temp = KvItem("", words(2).str, "");
+						temp = KvItem("", names(di).str, "");
 						temp.type = types(di);
 
 						%Get matrix contents
-						[newmat, endIdx] = getMatrix(data_strs(di), types(di)); %TODO: Cannot handle strings in matrix with commas in the strings. Semicolons too.
+						[newmat, endIdx] = getMatrix(data_strs(di), types(di).str); %TODO: Cannot handle strings in matrix with commas in the strings. Semicolons too.
 						if endIdx == -1
 							obj.logErrLn(strcat("Failed to read matrix value (", data_strs(di) , ") in vertical block"), openedOnLine);
 							return;
