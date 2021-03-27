@@ -21,7 +21,7 @@ classdef KvFile < handle
 			obj.fileVersion = -1;
 			obj.error_messages = [];
 			obj.current_version = 2;
-			obj.current_version_str = "2.0"
+			obj.current_version_str = "2.0";
 		end %******************************* END INITIALIZER **************
 		
 		function add(obj, newVar, varName, desc) %******** add() **********
@@ -60,6 +60,32 @@ classdef KvFile < handle
 			end
 			
 		end %*********************************** END add() ****************
+		
+		function ki=get(obj, name)
+			
+			for kvi=obj.varsFlat
+				if kvi.name == name
+					ki=kvi;
+					return;
+				end
+			end
+			for kvi=obj.vars1D
+				if kvi.name == name
+					ki=kvi;
+					return;
+				end
+			end
+			for kvi=obj.vars2D
+				if kvi.name == name
+					ki=kvi;
+					return;
+				end
+			end
+			
+			nki = KvItem(-1, "NOTFOUND", "");
+			nki.isnotfound = true;
+			ki=nki;
+		end
 		
 		function isHere=checkContains(obj, name) %***** checkContains() ***
 			for kvi=obj.varsFlat
@@ -168,6 +194,16 @@ classdef KvFile < handle
 			obj.vars1D = obj.vars2D(ind);
 			
 		end %************************** sortMatrices() ********************
+		
+		function write(obj, filename, options)
+			
+			kstr = obj.swrite(options);
+			
+			fid = fopen(filename,'wt');
+			fprintf(fid, kstr);
+			fclose(fid);
+			
+		end
 		
 		% Writes the currently loaded variables to a KV file on disk.
 		%
@@ -360,10 +396,10 @@ classdef KvFile < handle
 					end
 					
 					%Read version statement
-					obj.fileVersion = str2double(words(1).str);
+					obj.fileVersion = str2double(words(2).str);
 					if isnan(obj.fileVersion)
 						obj.fileVersion = -1;
-						obj.logErrLn('Failed to convert version number to string', lnum);
+						obj.logErrLn(strcat("Failed to convert version number '",words(2).str , "' to string"), lnum);
 					end
 				elseif words(1).str == "#HEADER"
 					
@@ -540,9 +576,153 @@ classdef KvFile < handle
 						
 						
 					end
+				elseif words(1).str == "#VERTICAL"
 					
-% 					disp(strcat(words(1).str, "<"))
-% 					disp(class(words(1).str))
+					vertBlock = [];
+					line_nums = [];
+					openedOnLine = lnum;
+					foundBlock = false;
+					while(~feof(fid))
+						sline = fgetl(fid); %Read line
+						lnum = lnum + 1;
+						words = parseIdx(sline, strcat(" ", char(9)));
+						 
+						%Skip blank lines
+						if isempty(words)
+							continue;
+						end
+						 
+						%Skip lines starting as comments
+						cstr = words(1).str;
+						if length(words(1).str) >= 2 &&  strcmp(cstr(1:2), '//')
+							continue;
+						end
+						 
+						%Read line contents
+						if (words(1).str == "#VERTICAL")
+							foundBlock = true;
+							break;
+						else %is part of block
+							 
+							%Remove inline comments
+							cstr = char(sline);
+							dashes = find(cstr=='/'); %Find dash characters
+							dash_del = find(diff(dashes)==1, 1, 'first'); %Find consecutive dashes
+							if ~isempty(dash_del) %comment present
+								cstr = cstr(1:dashes(dash_del)-1);
+								sline = string(cstr);
+							end
+							 
+							%Add to matrix of lines
+							if isempty(vertBlock)
+								vertBlock = string(sline);
+								line_nums = lnum;
+							else
+								vertBlock(end+1) = string(sline);
+								line_nums(end+1) = lnum;
+							end
+						end
+					end
+					
+					%Ensure block terminus was found
+					if ~foundBlock
+						obj.logErrLn('Failed to find closing #VERTICAL statement', openedOnLine);
+						return;
+					end
+					
+					%Ensure block is sufficient size
+					if length(vertBlock) < 3
+						obj.logErrLn("Found fewer than three non-blank lines in vertical block.", openedOnLine);
+						return;
+					end
+					
+					%Get types
+					types = parseIdx(vertBlock(1), strcat(" ", char(9)));
+					
+					%Get names
+					names = parseIdx(vertBlock(2), strcat(" ", char(9)));
+					
+					%Check if descriptions present
+					cstr = char(strtrim(vertBlock(3)));
+					descs = [];
+					if cstr(1) == '?'
+						descs = parseIdx(vertBlock(3), "?");
+					end
+					
+					%Check for errors in list sizes
+					if (length(types) ~= length(names)) || (~isempty(descs) && length(descs) ~= length(names))
+						obj.logErrLn("Number of type declarations, names, and descriptions (if present) must match." , openedOnLine);
+						return;
+					end
+					
+					%Check names are valid
+					c=1;
+					for n=names
+						if ~obj.isValidName(n.str)
+							obj.logErrLn(strcat("Name '", n.str, "' is invalid."), line_nums(c));
+							return;
+						end
+						c=c+1;
+					end
+					
+					%Check types are valid
+					c=1;
+					for t=types
+						if t.str ~= "m<d>" && t.str ~= "m<s>" && t.str ~= "m<b>"
+							obj.logErrLn(strcat("Type '", t.str, "' is invalid."), line_nums(c));
+							return;
+						end
+						c=c+1;
+					end
+					
+					%Initialize data_strs matrix
+					data_strs = "";
+					for i=2:length(names)
+						data_strs(end+1) = "";
+					end
+					
+					%Break lines into vectors
+					maxAllowed = length(names);
+					startRow = 3;
+					if ~isempty(descs)
+						startRow = 4;
+					end
+					c=startRow;
+					for l=vertBlock(startRow:end)
+						
+						%Parse line
+						words = parseIdx(l, strcat(" ", string(char(9))));
+						
+						%Check that matrix didn't omit data one line, then
+						%bring it back later
+						if length(words) > maxAllowed
+							obj.logErrLn("Too many columns detected.", line_nums(c));
+							return;
+						end
+						
+						%Update max No. allowed tokens
+						if length(words) < maxAllowed
+							maxAllowed = length(words);
+						end
+						
+						%For each token, add to corresponding data string
+						for wi=1:length(words)
+							
+							%Add comma if data string not blank and last
+							%line was not semicolon
+							cstr = strtrim(data_strs(wi));
+							if data_strs(wi) ~= "" && cstr(end) ~= ';'
+								data_strs = strcat(data_strs, ";");
+							end
+							
+							%Add new data
+							data_strs(wi) = strcat(data_strs(wi), words(wi).str);
+						end
+						
+						
+						c=c+1;
+					end
+
 				end %-------------------- END check match file element ----
                 
             end %- - - - - - - - - - - - END Loop Through File - - - - - - 
