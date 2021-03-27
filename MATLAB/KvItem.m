@@ -6,6 +6,7 @@ classdef KvItem < handle
 		name
 		desc
 		count
+		isnotfound %When is a returned value that does not exist, is set true, else false
 	end		 % ************* END PROPERTIES *****************
 	
 	methods  % ************* METHODS ************************
@@ -17,6 +18,7 @@ classdef KvItem < handle
 			obj.name = string(name);
 			obj.desc = string(desc);
 			obj.count = numel(obj.val);
+			obj.isnotfound = false;
 			if isa(value,'double')
 				obj.type = "d";
 			elseif isa(value,'string')
@@ -50,6 +52,10 @@ classdef KvItem < handle
 			end
 			
 		end % ************* END CONSTRUCTOR ********************
+		
+		function nf=isnf(obj)
+			nf=obj.isnotfound;
+		end
 		
 		function valstr=getValueStr(obj)
 			
