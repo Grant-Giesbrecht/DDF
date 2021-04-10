@@ -61,6 +61,20 @@ classdef KvFile < handle
 
 		end %*********************************** END add() ****************
 
+		function assignAll(obj)
+			
+			for kvi=obj.varsFlat
+				assignin('base', kvi.name, kvi.val);
+			end
+			for kvi=obj.vars1D
+				assignin('base', kvi.name, kvi.val);
+			end
+			for kvi=obj.vars2D
+				assignin('base', kvi.name, kvi.val);
+			end
+			
+		end
+		
 		function ki=get(obj, name)
 
 			for kvi=obj.varsFlat
