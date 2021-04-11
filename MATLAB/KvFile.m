@@ -208,8 +208,80 @@ classdef KvFile < handle
 			[~, ind] = sort([obj.vars2D.count]);
 			obj.vars1D = obj.vars2D(ind);
 
-		end %************************** sortMatrices() ********************
+		end %********************** END sortMatrices() ********************
 
+		function show(obj) %*************** show() ************************
+			
+			disp(strcat("No. Variables: ", num2str(obj.numVar)));
+			nameCap = 10;
+			typeCap = 10;
+			valCap = 20;
+			descCap = 20;
+			
+			names = strings([length(obj.varsFlat), 1]);
+			types = strings([length(obj.varsFlat), 1]);
+			vals = strings([length(obj.varsFlat), 1]);
+			descs = strings([length(obj.varsFlat), 1]);
+			
+			i = 0;
+			for v=obj.varsFlat
+				i = i + 1;
+				names(i) = limitLength(v.name, nameCap);
+				types(i) = limitLength(v.type, typeCap);
+				vals(i) = limitLength(v.getValueStr(), valCap);
+				descs(i) = limitLength(string(v.desc), descCap);
+			end
+			TF = table(names, types, vals, descs);
+			
+			disp("-----------------------------------------------------------------------");
+			disp("| Flat Variables                                                      |");
+			disp("-----------------------------------------------------------------------");
+			disp(TF);
+			disp(" ");
+			disp(" ")
+			
+			names = strings([length(obj.vars1D), 1]);
+			types = strings([length(obj.vars1D), 1]);
+			vals = strings([length(obj.vars1D), 1]);
+			descs = strings([length(obj.vars1D), 1]);
+			
+			i = 0;
+			for v=obj.vars1D
+				i = i + 1;
+				names(i) = limitLength(v.name, nameCap);
+				types(i) = limitLength(v.type, typeCap);
+				vals(i) = limitLength(v.getValueStr(), valCap);
+				descs(i) = limitLength(string(v.desc), descCap);
+			end
+			T1D = table(names, types, vals, descs);
+			disp("-----------------------------------------------------------------------");
+			disp("| 1D Variables                                                        |");
+			disp("-----------------------------------------------------------------------");
+			disp(T1D);
+			disp(" ");
+			disp(" ")
+			
+			names = strings([length(obj.vars2D), 1]);
+			types = strings([length(obj.vars2D), 1]);
+			vals = strings([length(obj.vars2D), 1]);
+			descs = strings([length(obj.vars2D), 1]);
+			
+			i = 0;
+			for v=obj.vars2D
+				i = i + 1;
+				names(i) = limitLength(v.name, nameCap);
+				types(i) = limitLength(v.type, typeCap);
+				vals(i) = limitLength(v.getValueStr(), valCap);
+				descs(i) = limitLength(string(v.desc), descCap);
+			end
+			T2D = table(names, types, vals, descs);
+			disp("-----------------------------------------------------------------------");
+			disp("| 2D Variables                                                        |");
+			disp("-----------------------------------------------------------------------");
+			disp(T2D);
+			
+		end %*************************** END show() ***********************
+		
 		function write(obj, filename, options)
 
 			kstr = obj.swrite(options);
