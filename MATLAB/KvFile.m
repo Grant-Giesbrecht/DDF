@@ -580,6 +580,8 @@ classdef KvFile < handle
 						valchar = char(val.str());
 						temp.val = string(valchar(2:end-1));
 
+						allowSemi = true;
+						
 						%Scan through optional features
 						remainingwords = parseIdx(sline(val.idx+1:end), strcat(" ", char(9)));
 						for w=remainingwords
