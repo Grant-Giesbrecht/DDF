@@ -59,10 +59,8 @@ classdef KvItem < handle
 		
 		function valstr=getValueStr(obj)
 			
-			obj.dimension
-			
 			if obj.dimension == 2 %If a 1D matrix
-				disp("1D");
+
 				%Start with blank string
 				valstr = "";
 				
@@ -118,6 +116,8 @@ classdef KvItem < handle
 			else %Else return element string
 				valstr = obj.getElementStr(obj.val);
 			end
+			
+			valstr = string(valstr);
 			
 		end
 		
