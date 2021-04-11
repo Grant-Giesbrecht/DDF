@@ -799,7 +799,7 @@ classdef KvFile < handle
 							%line was not semicolon
 							cstr = strtrim(data_strs(wi));
 							if data_strs(wi) ~= "" && cstr(end) ~= ';'
-								data_strs = strcat(data_strs, ";");
+								data_strs(wi) = strcat(data_strs(wi), ",");
 							end
 
 							%Add new data
@@ -814,12 +814,18 @@ classdef KvFile < handle
 
 						%Create new KvItem
 						temp = KvItem("", names(di).str, "");
-						temp.type = types(di);
-
+						typestr = char(types(di).str);
+						typestr = string(typestr(3));
+						temp.type = typestr;
+						if ~isempty(descs)
+							temp.desc = descs(di).str;
+						end
+						
 						%Get matrix contents
-						[newmat, endIdx] = getMatrix(data_strs(di), types(di).str); %TODO: Cannot handle strings in matrix with commas in the strings. Semicolons too.
+						data_strs(di) = strcat("[", data_strs(di), "]");
+						[newmat, endIdx] = getMatrix(data_strs(di), typestr); %TODO: Cannot handle strings in matrix with commas in the strings. Semicolons too.
 						if endIdx == -1
-							obj.logErrLn(strcat("Failed to read matrix value (", data_strs(di) , ") in vertical block"), openedOnLine);
+							obj.logErrLn(strcat("Failed to read matrix value (", data_strs(di) , ", type=", typestr , ") in vertical block"), openedOnLine);
 							return;
 						end
 						temp.val = newmat;
