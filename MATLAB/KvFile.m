@@ -556,7 +556,7 @@ classdef KvFile < handle
 								end
 								allowSemi = false;
 							elseif w.str == "?" || cstr(1) == '?'
-								temp.desc = sline(w.idx:end); %TODO: This will include inline comments. Go through document at beginning and purge all comments
+								temp.desc = strtrim(string(sline(w.idx+2:end))); %TODO: This will include inline comments. Go through document at beginning and purge all comments
 							elseif w.str == "//"
 								break; %Remainder is comment
 							end
@@ -591,7 +591,7 @@ classdef KvFile < handle
 								end
 								allowSemi = false;
 							elseif w.str == "?" || cstr(1) == '?'
-								temp.desc = sline(val.idx+1+w.idx:end); %TODO: This will include inline comments. Go through document at beginning and purge all comments
+								temp.desc = strtrim(string(sline(val.idx+2+w.idx:end))); %TODO: This will include inline comments. Go through document at beginning and purge all comments
 							elseif w.str == "//"
 								break; %Remainder is comment
 							end
@@ -641,7 +641,7 @@ classdef KvFile < handle
 								end
 								allowSemi = false;
 							elseif w.str == "?" || cstr(1) == '?'
-								temp.desc = sline(endIdx+1+w.idx:end); %TODO: This will include inline comments. Go through document at beginning and purge all comments
+								temp.desc = strtrim(string(sline(endIdx+2+w.idx:end))); %TODO: This will include inline comments. Go through document at beginning and purge all comments
 							elseif w.str == "//"
 								break; %Remainder is comment
 							end
@@ -818,7 +818,7 @@ classdef KvFile < handle
 						typestr = string(typestr(3));
 						temp.type = typestr;
 						if ~isempty(descs)
-							temp.desc = descs(di).str;
+							temp.desc = strtrim(descs(di).str);
 						end
 						
 						%Get matrix contents
