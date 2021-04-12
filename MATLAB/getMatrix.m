@@ -20,7 +20,7 @@ function [val, lastIdx]=getMatrix(str, mat_type)
 	matstr = str(opens(1)+1:closes(1)-1);
 	
 	%Get each row
-	rows = parseIdx(matstr, ";");
+	rows = parseIdx(matstr, ";", true);
 	
 	newmat = [];
 	
