@@ -158,6 +158,9 @@ classdef KvFile < handle
 			obj.varsFlat = [];
 			obj.vars1D = [];
 			obj.vars2D = [];
+			obj.error_messages = [];
+			obj.header = "";
+			obj.fileVersion = -1;			
 		end %*************************** END clear() **********************
 
 		function hdr=getHeader(obj) %************* getHeader() ************
@@ -466,7 +469,7 @@ classdef KvFile < handle
 
                 %Note: char(9) is the tab character
 				sline = ensureWhitespace(sline, ';');
-                words = parseIdx(sline, strcat(" ", char(9)));
+                words = parseIdx(sline, [" ", char(9)]);
 
 				%Skip blank lines
 				if isempty(words)
@@ -496,7 +499,7 @@ classdef KvFile < handle
 					 while(~feof(fid))
 						 sline = fgetl(fid); %Read line
 						 lnum = lnum + 1;
-						 words = parseIdx(sline, strcat(" ", char(9)));
+						 words = parseIdx(sline, [" ", char(9)]);
 						 if (~isempty(words)) && (words(1).str == "#HEADER")
 							 foundHeader = 1;
 							 break;
@@ -583,7 +586,7 @@ classdef KvFile < handle
 						allowSemi = true;
 						
 						%Scan through optional features
-						remainingwords = parseIdx(sline(val.idx+1:end), strcat(" ", char(9)));
+						remainingwords = parseIdx(sline(val.idx+1:end), [" ", char(9)]);
 						for w=remainingwords
 							cstr = char(w.str);
 							if w.str == ";"
@@ -633,7 +636,7 @@ classdef KvFile < handle
 
 						%Scan through optional features
 						allowSemi = true;
-						remainingwords = parseIdx(sline(endIdx+1:end), strcat(" ", char(9)));
+						remainingwords = parseIdx(sline(endIdx+1:end), [" ", char(9)]);
 						for w=remainingwords
 							cstr = char(w.str);
 							if w.str == ";"
@@ -674,7 +677,7 @@ classdef KvFile < handle
 					while(~feof(fid))
 						sline = fgetl(fid); %Read line
 						lnum = lnum + 1;
-						words = parseIdx(sline, strcat(" ", char(9)));
+						words = parseIdx(sline, [" ", char(9)]);
 
 						%Skip blank lines
 						if isempty(words)
@@ -726,10 +729,10 @@ classdef KvFile < handle
 					end
 
 					%Get types
-					types = parseIdx(vertBlock(1), strcat(" ", char(9)));
+					types = parseIdx(vertBlock(1), [" ", char(9)]);
 
 					%Get names
-					names = parseIdx(vertBlock(2), strcat(" ", char(9)));
+					names = parseIdx(vertBlock(2), [" ", char(9)]);
 
 					%Check if descriptions present
 					cstr = char(strtrim(vertBlock(3)));
@@ -740,7 +743,7 @@ classdef KvFile < handle
 
 					%Check for errors in list sizes
 					if (length(types) ~= length(names)) || (~isempty(descs) && length(descs) ~= length(names))
-						obj.logErrLn("Number of type declarations, names, and descriptions (if present) must match." , openedOnLine);
+						obj.logErrLn(strcat("Number of type declarations (", num2str(length(types)) ,"), names (", num2str(length(names)) ,"), and descriptions (", num2str(length(descs)) ,"), if present, must match.") , openedOnLine);
 						return;
 					end
 
@@ -835,7 +838,7 @@ classdef KvFile < handle
 
 						%Scan through optional features
 						allowSemi = true;
-						remainingwords = parseIdx(sline(endIdx+1:end), strcat(" ", char(9)));
+						remainingwords = parseIdx(sline(endIdx+1:end), [" ", char(9)]);
 						for w=remainingwords
 							cstr = char(w.str);
 							if w.str == ";"
