@@ -1,15 +1,43 @@
 classdef KvFile < handle
-
+% KvFile Read and write KV files.
+% KvFile reads and writes the KV data file format. 
+%	
+% KvFile Properties:
+%	varsFlat - Matrix of KvItems representing non-matrix variables
+%	vars1D - Matrix of KvItems representing 1D matrix variables
+%	vars2D - Matrix of KvItems representing 2D matrix variables
+%	header - header string either read from file, or to be written to file
+%	fileVersion - version number of last read file
+%
+% KvFile Methods:
+%	add - Add a variable to the KvFile
+%	assignAll - Assigns all variables loaded in the KvFile to the workspace
+%	get - Returns the KvItem with the specified name
+%	checkContains - Checks that a variable exists in the KvFile with the
+%	specified name.
+%	err - Display and erase the most recent error message
+%	numVar - Return the number of varaibles loaded in the KvFile
+%	clear - Clear all contents of the KvFile
+%	getHeader - Return the header string
+%	setHeader - Set the header string
+%	show - Display all contents of the KvFile
+%	write - Write the contents of the KvFile to a KV file
+%	swrite - Write the contents of the KvFile to a KV formatted string
+%	readKV1_V2 - Read a version 2 KV file
+%
 	properties   %************************ PROPERTIES *********************
 		varsFlat
 		vars1D
 		vars2D
 		header
 		fileVersion
+	end   %********************** END PROPERTIES **************************
+	
+	properties (Access=private) %************ PRIVATE PROPERTIES **********
 		error_messages
 		current_version
 		current_version_str
-	end   %********************** END PROPERTIES **************************
+	end  %********************* END PRIVATE PROPERTIES ********************
 
 	methods   %************************ METHODS ***************************
 
@@ -61,7 +89,7 @@ classdef KvFile < handle
 
 		end %*********************************** END add() ****************
 
-		function assignAll(obj)
+		function assignAll(obj) %**************** assignAll() *************
 			
 			for kvi=obj.varsFlat
 				assignin('base', kvi.name, kvi.val);
@@ -73,9 +101,9 @@ classdef KvFile < handle
 				assignin('base', kvi.name, kvi.val);
 			end
 			
-		end
+		end %******************* END assignAll() **************************
 		
-		function ki=get(obj, name)
+		function ki=get(obj, name) %************* get() *******************
 
 			for kvi=obj.varsFlat
 				if kvi.name == name
@@ -99,7 +127,7 @@ classdef KvFile < handle
 			nki = KvItem(-1, "NOTFOUND", "");
 			nki.isnotfound = true;
 			ki=nki;
-		end
+		end %******************************* END get() ********************
 
 		function isHere=checkContains(obj, name) %***** checkContains() ***
 			for kvi=obj.varsFlat
@@ -139,14 +167,14 @@ classdef KvFile < handle
 
 		end %**************************** END logErrLn() ******************
 
-		function strout=err(obj)
+		function strout=err(obj) %********************** err() ************
 			if length(obj.error_messages) == 0
 				strout = "No errors";
 				return;
 			end
 			strout=obj.error_messages(end);
 			obj.error_messages(end) = [];
-		end
+		end %************************************* END err() **************
 
 		function n=numVar(obj) %**************** numVar() *****************
 
@@ -285,7 +313,7 @@ classdef KvFile < handle
 			
 		end %*************************** END show() ***********************
 		
-		function write(obj, filename, options)
+		function write(obj, filename, options) %********* write() *********
 
 			kstr = obj.swrite(options);
 
@@ -293,7 +321,7 @@ classdef KvFile < handle
 			fprintf(fid, kstr);
 			fclose(fid);
 
-		end
+		end %******************************* END write() ******************
 
 		% Writes the currently loaded variables to a KV file on disk.
 		%
