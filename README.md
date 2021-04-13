@@ -19,6 +19,8 @@ _NOTE:_ This repository is a work in progress and actively being developed as of
 April 2021. Installation instructions and full tutorials will be made available
 when the first revision of the code is finalized later this year.
 
+For more information, see the [Syntax Rules](Syntax.md).
+
 ## Using KV Files
 
 Currently, this specification includes classes to read and write KV files in three
