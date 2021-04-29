@@ -27,6 +27,8 @@ function out=getString(str)
 	
 	startIdx = se_quotes(1);
 	endIdx = se_quotes(2);
-	out=StringIdx(str(startIdx:endIdx), endIdx);
+	si = StringIdx(str(startIdx:endIdx), endIdx);
+	si.sidx = startIdx;
+	out = si;
 	
 end
