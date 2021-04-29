@@ -10,7 +10,9 @@ Note: When describing syntax, parenthesis will indicate optional components, and
 Every KV file consists of these elements:
   * __Version statements:__ Describes file version
   * __Header statements:__ Provides a description of the file contents (ie. the header)
-  * __Inline comments:__ _TODO: Remove?_
+  * __Inline comments:__ Indicated by double forward slashes, everything after the comment identifier is
+  removed. This includes in variable descriptions. The only place double forward slashes comment identifiers
+  are not recognized as comment identifiers are within string literals, ie. text surrounded by double quotes.
   * __Inline variable statements:__ Declares any type of variable in one line
   * __Vertical blocks:__ Sections of the file where vertical variable statements are allowed
   * __Vertical variable__ statements: Declares a 1D or 2D matrix variable over multiple lines
@@ -45,17 +47,19 @@ You can use multiple lines if you want.
 ```
 
 ### Inline comments:
-_TODO: Verify that this is no longer true!_
 
-This element behaves exactly the same way a C comment does. Start the inline comment with two forward slashes. Everything else on the line will be ignored. Multi-line comments are not implemented.
+This element behaves exactly the same way a C comment does. Start the inline comment with two forward
+slashes. Everything else on the line will be ignored. Multi-line comments are not implemented. The only
+place double forward slashes comment identifiers are not recognized as comment identifiers are within
+string literals, ie. text surrounded by double quotes.
 
 ### Inline variable statements:
 
-_TODO: This references comments. Remove?_
-
 _TODO: Remove semicolon support?_
 
-Variable statements are the primary means of storing data in KV files. Inline variable statements define a single variable on a single line. They follow the basic format of `$type$ $name$ $data$ (;)(?$variable-description$)`. The ending semicolon is optional, as is a variable description. All characters after the question mark are included in the variable description, and thus comments can NOT be present on the same line as descriptions. Note that matrices of matrices (eg. `m<m<d>>`) are *not* supported or required. A 2D matrix uses the same declaration as a 1D matrix, however 3D matrices are not supported in version 2.0.
+__TODO: Fix C++, Python, to remove comments as first step?__
+
+Variable statements are the primary means of storing data in KV files. Inline variable statements define a single variable on a single line. They follow the basic format of `$type$ $name$ $data$ (;)(?$variable-description$)`. The ending semicolon is optional, as is a variable description. Note that matrices of matrices (eg. `m<m<d>>`) are *not* supported or required. A 2D matrix uses the same declaration as a 1D matrix, however 3D matrices are not supported in version 2.0.
 
   * ### Data types:
   The available data types in KV files are double precision floats, strings, booleans, and matrices of any one data type. Type is indicated with a single letter. Matrices accept the data type in angle brackets.
