@@ -1,6 +1,6 @@
 classdef KvFile < handle
 % KvFile Read and write KV files.
-% KvFile reads and writes the KV data file format. 
+%	Reads and writes the KV data file format. 
 %	
 % KvFile Properties:
 %	varsFlat - Matrix of KvItems representing non-matrix variables
@@ -40,8 +40,8 @@ classdef KvFile < handle
 	end  %********************* END PRIVATE PROPERTIES ********************
 
 	methods   %************************ METHODS ***************************
-
-		function obj=KvFile()	%*************** INITIALIZER **************
+		
+		function obj=KvFile(varargin)	%*************** INITIALIZER **************
 			obj.varsFlat = [];
 			obj.vars1D = [];
 			obj.vars2D = [];
@@ -50,6 +50,12 @@ classdef KvFile < handle
 			obj.error_messages = [];
 			obj.current_version = 2;
 			obj.current_version_str = "2.0";
+			
+			if nargin > 0
+				if class(varargin{1}) == "string"
+					obj.readKV1_V2(varargin{1});
+				end
+			end
 		end %******************************* END INITIALIZER **************
 
 		function add(obj, newVar, varName, desc) %******** add() **********
@@ -494,6 +500,9 @@ classdef KvFile < handle
 
                 sline = fgetl(fid); %Read line
                 lnum = lnum+1; %Increment Line Number
+				
+				%Remove comments
+				sline = trimtok(sline, '//');
 
                 %Note: char(9) is the tab character
 				sline = ensureWhitespace(sline, ';');
@@ -526,6 +535,7 @@ classdef KvFile < handle
 
 					 while(~feof(fid))
 						 sline = fgetl(fid); %Read line
+						 sline = trimtok(sline, '//'); %Trim comments
 						 lnum = lnum + 1;
 						 words = parseIdx(sline, [" ", char(9)]);
 						 if (~isempty(words)) && (words(1).str == "#HEADER")
@@ -704,6 +714,7 @@ classdef KvFile < handle
 					foundBlock = false;
 					while(~feof(fid))
 						sline = fgetl(fid); %Read line
+						sline = trimtok(sline, '//'); %Trim comments
 						lnum = lnum + 1;
 						words = parseIdx(sline, [" ", char(9)]);
 
@@ -811,6 +822,8 @@ classdef KvFile < handle
 					for l=vertBlock(startRow:end)
 
 						%Parse line without breaking up string
+						assignin('base', 'problemString', l);
+						assignin('base', 'problemLine', lnum);
 						words = parseIdx(l, strcat(" ", string(char(9))), true);
 
 						%Check that matrix didn't omit data one line, then
