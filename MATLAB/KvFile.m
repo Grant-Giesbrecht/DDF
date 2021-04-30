@@ -483,7 +483,76 @@ classdef KvFile < handle
 			fstr = out;
 		end %*********************** END swrite() *************************
 
-        function readKV1_V2(obj, fileIn, options) %***** readKV1_V2() *****
+		function read(obj, filename) %********************* read() *********************
+			
+			obj.readVersion(filename);
+			
+			if obj.fileVersion == -1
+				obj.logErr(strcat("Failed to read file '", filename ,"'. Unable to determine file version."))
+				return;
+			end
+			
+			if obj.fileVersion == 2
+				obj.readKV1_V2(filename)
+				
+			end
+			
+		end %**************************** END read() **********************
+		
+		function readVersion(obj, fileIn) %********************** readVersion() ******
+			
+			lnum = 0;
+			foundHeader = 0;
+
+            %Open file
+            fid = fopen(fileIn);
+			if fid == -1
+				obj.logErr(strcat('Failed to open file "', fileIn, '"'));
+				return;
+			end
+
+            %Read file line by line
+            while(~feof(fid)) %- - - - - - - Loop Through File - - - - - -
+
+                sline = fgetl(fid); %Read line
+                lnum = lnum+1; %Increment Line Number
+				
+				%Remove comments
+				sline = trimtok(sline, '//');
+
+                %Note: char(9) is the tab character
+				sline = ensureWhitespace(sline, ';');
+                words = parseIdx(sline, [" ", char(9)]);
+
+				%Skip blank lines
+				if isempty(words)
+					continue
+				end
+
+				% Check for each type of file elements
+				if words(1).str == "#VERSION"
+
+					%Ensure 2 words present
+					if length(words) ~= 2
+						obj.fileVersion = -1;
+						obj.logErrLn('Version statement accepts exactly 2 words', lnum);
+						return;
+					end
+
+					%Read version statement
+					obj.fileVersion = str2double(words(2).str);
+					if isnan(obj.fileVersion)
+						obj.fileVersion = -1;
+						obj.logErrLn(strcat("Failed to convert version number '",words(2).str , "' to string"), lnum);
+					end
+					
+					break;
+				end
+			end
+			
+		end %************************************ END readVersion() *******
+		
+        function readKV1_V2(obj, fileIn) %***** readKV1_V2() *****
 
             lnum = 0;
 			foundHeader = 0;
