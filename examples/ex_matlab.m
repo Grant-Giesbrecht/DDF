@@ -1,4 +1,6 @@
-kvbase = KvFile("ex_base.kv");
+kvbase = KvFile;
+
+% ************************* COMMENTS AND DESCRIPTION TEST *****************
 
 %Add neccesary variables to baseline
 kvbase.clear();
@@ -8,10 +10,36 @@ kvbase.add(false, "B", "Desc ");
 kvbase.get("moons").desc = "Not all moons ";
 kvbase.get("baz").desc = "Nons[ense] word ";
 
+%Read in 'ex_comments_desc.kv'
 kv_descom = KvFile("ex_comments_desc.kv");
 
-compareKV(kv_descom, kvbase, 'LooseDesc');
+if compareKV(kv_descom, kvbase, 'LooseDesc')
+	disp("Passed comments and description test");
+else
+	disp("Failed comments and descrition test");
+end
 % compareKV(kv_descom, kvbase)
+
+%********************************* MATRICES TEST **************************
+
+kvbase.clear();
+kvbase = KvFile("ex_base.kv");
+kvbase.add(["This is a ; test string//", "This string is ont the same row"; "This string is on a new row", "This string is also on the 2nd row //;"], "string_test", "string desc");
+kvbase.add([true, false;false, true], "bool_test", "bool desc");
+
+kv_mat = KvFile("ex_matrix.kv");
+
+if compareKV(kv_mat, kvbase, 'LooseDesc')
+	disp("Passed matrix test");
+else
+	disp("Failed matrix test");
+end
+
+
+
+
+
+
 
 function eq = compareKV(A, B, varargin)
 
