@@ -1,4 +1,4 @@
-function eq = compareKVI(A, B, varargin)
+function eq = compareDDFI(A, B, varargin)
 
 	loose_desc = false;
 
