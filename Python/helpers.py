@@ -1,5 +1,5 @@
 from itertools import groupby
-from .kv_types import *
+from .ddf_types import *
 
 # Looks for characters in 'delims' in string 'input'. Supposing the string is to
 # be broken up at each character in 'delims', the function returns a generator
@@ -38,4 +38,4 @@ def parseIdxKeep(input:str, delims:str=" ", keep_delims:str=""):
 
 def parseIdx(input:str, delims:str=" ", keep_delims:str=""):
 
-	for in 
+	for in

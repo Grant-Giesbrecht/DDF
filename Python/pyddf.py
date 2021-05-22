@@ -1,6 +1,6 @@
-from .kv_types import *
+from .dff_types import *
 from .helpers import *
-class KVFile:
+class DFFIO:
 
 	#***************** INITIALIZERS *******************************************#
 
@@ -20,7 +20,7 @@ class KVFile:
 	def add(self, newVar, varName:str, desc:str=""):
 		""" Add a variable to the object  """
 
-		newItem = KvItem(newVar, varName, desc)
+		newItem = DFFItem(newVar, varName, desc)
 
 		#Check for errors
 		if newItem.type == ERR:
@@ -66,7 +66,7 @@ class KVFile:
 			if x.name == varName:
 				return x
 
-		self.logErr(f"Variable 'varName' missed! There's a bug in pykv!")
+		self.logErr(f"Variable 'varName' missed! There's a bug in pyddf!")
 
 
 
@@ -141,7 +141,7 @@ class KVFile:
 
 	#************************** FILE I/O **************************************#
 
-	def readKV1_V2(self, fileIn:str, options:str=""):
+	def loadDDF_V1(self, fileIn:str, options:str=""):
 
 		with open(fileIn) as file:
 
@@ -242,7 +242,7 @@ class KVFile:
 							return False
 						optional_features_start = 3;
 
-						temp = KvItem(val, words[1].str)
+						temp = DFFItem(val, words[1].str)
 
 						#Read optional arguments/features
 						allow_semi = True

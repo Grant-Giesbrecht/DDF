@@ -19,7 +19,7 @@ class StringIdx():
 	def __repr__(self):
 		return self.__str__()
 
-class KvItem():
+class DFFItem():
 
 	def __init__(self, value, name:str, desc:str=""):
 
@@ -51,7 +51,7 @@ class KvItem():
 				descstr = self.desc
 			descstr = f", (\"{descstr}\")"
 
-		return f"<KvItem({typesym}) {self.name}={self.val}{descstr}>"
+		return f"<DFFItem({typesym}) {self.name}={self.val}{descstr}>"
 
 def getType(value):
 
