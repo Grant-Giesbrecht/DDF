@@ -8,3 +8,7 @@ Python:
 MATLAB
 	Not implemented. read function for version 1 implemented, but must be
 	replaced.
+
+
+TODO:
+* MATLAB: Writing just variable names (such as in error_conversions.ddf) does not trigger errors/ warningins in DDFIO.m

@@ -1,5 +1,7 @@
 # DDF File Specification
 
+	"Dokumentiertes Datenformat" (DDF)
+
 DDF is a Git repository that provides C++, Python, and MATLAB code to read
 DDF files. The DDF file format is a plain text format for saving data in a clearly
 defined way. It is intended to address the problems that can be caused by the
