@@ -1,29 +1,29 @@
-classdef KvFile < handle
-% KvFile Read and write KV files.
-%	Reads and writes the KV data file format. 
+classdef DDFIO < handle
+% DDFIO Read and write DDF files.
+%	Reads and writes the DDF data file format. 
 %	
-% KvFile Properties:
-%	varsFlat - Matrix of KvItems representing non-matrix variables
-%	vars1D - Matrix of KvItems representing 1D matrix variables
-%	vars2D - Matrix of KvItems representing 2D matrix variables
+% DDFIO Properties:
+%	varsFlat - Matrix of DDFItems representing non-matrix variables
+%	vars1D - Matrix of DDFItems representing 1D matrix variables
+%	vars2D - Matrix of DDFItems representing 2D matrix variables
 %	header - header string either read from file, or to be written to file
 %	fileVersion - version number of last read file
 %
-% KvFile Methods:
-%	add - Add a variable to the KvFile
-%	assignAll - Assigns all variables loaded in the KvFile to the workspace
-%	get - Returns the KvItem with the specified name
-%	checkContains - Checks that a variable exists in the KvFile with the
-%	specified name.
+% DDFIO Methods:
+%	add - Add a variable to the DDFIO
+%	assignAll - Assigns all variables loaded in the DDF file to the workspace
+%	get - Returns the DDFItem with the specified name
+%	checkContains - Checks that a variable exists with the specified name
+%	the DDFIO object.
 %	err - Display and erase the most recent error message
-%	numVar - Return the number of varaibles loaded in the KvFile
-%	clear - Clear all contents of the KvFile
+%	numVar - Return the number of varaibles loaded in the DDFIO object
+%	clear - Clear all contents of the DDFIO object
 %	getHeader - Return the header string
 %	setHeader - Set the header string
-%	show - Display all contents of the KvFile
-%	write - Write the contents of the KvFile to a KV file
-%	swrite - Write the contents of the KvFile to a KV formatted string
-%	readKV1_V2 - Read a version 2 KV file
+%	show - Display all contents of the DDFIO object
+%	write - Write the contents of the DDFIO object to a DDF file
+%	swrite - Write the contents of the DDFIO object to a DDF formatted string
+%	readDDF_V1 - Read a version 1 DDF file
 %
 	properties   %************************ PROPERTIES *********************
 		varsFlat
@@ -41,7 +41,7 @@ classdef KvFile < handle
 
 	methods   %************************ METHODS ***************************
 		
-		function obj=KvFile(varargin)	%*************** INITIALIZER **************
+		function obj=DDFIO(varargin)	%*************** INITIALIZER **************
 			obj.varsFlat = [];
 			obj.vars1D = [];
 			obj.vars2D = [];
@@ -49,19 +49,19 @@ classdef KvFile < handle
 			obj.fileVersion = -1;
 			obj.error_messages = [];
 			obj.current_version = 2;
-			obj.current_version_str = "2.0";
+			obj.current_version_str = "1.0";
 			
 			if nargin > 0
 				if class(varargin{1}) == "string"
-					obj.readKV1_V2(varargin{1});
+					obj.readDDF_V1(varargin{1});
 				end
 			end
 		end %******************************* END INITIALIZER **************
 
 		function add(obj, newVar, varName, desc) %******** add() **********
 
-			%Create new KV Item
-			newItem = KvItem(newVar, varName, desc);
+			%Create new DDF Item
+			newItem = DDFItem(newVar, varName, desc);
 
 			%Verify variable not already in object
 			if obj.checkContains(varName)
@@ -97,59 +97,59 @@ classdef KvFile < handle
 
 		function assignAll(obj) %**************** assignAll() *************
 			
-			for kvi=obj.varsFlat
-				assignin('base', kvi.name, kvi.val);
+			for ddfi=obj.varsFlat
+				assignin('base', ddfi.name, ddfi.val);
 			end
-			for kvi=obj.vars1D
-				assignin('base', kvi.name, kvi.val);
+			for ddfi=obj.vars1D
+				assignin('base', ddfi.name, ddfi.val);
 			end
-			for kvi=obj.vars2D
-				assignin('base', kvi.name, kvi.val);
+			for ddfi=obj.vars2D
+				assignin('base', ddfi.name, ddfi.val);
 			end
 			
 		end %******************* END assignAll() **************************
 		
-		function ki=get(obj, name) %************* get() *******************
+		function di=get(obj, name) %************* get() *******************
 
-			for kvi=obj.varsFlat
-				if kvi.name == name
-					ki=kvi;
+			for ddfi=obj.varsFlat
+				if ddfi.name == name
+					di=ddfi;
 					return;
 				end
 			end
-			for kvi=obj.vars1D
-				if kvi.name == name
-					ki=kvi;
+			for ddfi=obj.vars1D
+				if ddfi.name == name
+					di=ddfi;
 					return;
 				end
 			end
-			for kvi=obj.vars2D
-				if kvi.name == name
-					ki=kvi;
+			for ddfi=obj.vars2D
+				if ddfi.name == name
+					di=ddfi;
 					return;
 				end
 			end
 
-			nki = KvItem(-1, "NOTFOUND", "");
+			nki = DDFItem(-1, "NOTFOUND", "");
 			nki.isnotfound = true;
-			ki=nki;
+			di=nki;
 		end %******************************* END get() ********************
 
 		function isHere=checkContains(obj, name) %***** checkContains() ***
-			for kvi=obj.varsFlat
-				if kvi.name == name
+			for ddfi=obj.varsFlat
+				if ddfi.name == name
 					isHere = true;
 					return;
 				end
 			end
-			for kvi=obj.vars1D
-				if kvi.name == name
+			for ddfi=obj.vars1D
+				if ddfi.name == name
 					isHere = true;
 					return;
 				end
 			end
-			for kvi=obj.vars2D
-				if kvi.name == name
+			for ddfi=obj.vars2D
+				if ddfi.name == name
 					isHere = true;
 					return;
 				end
@@ -329,7 +329,7 @@ classdef KvFile < handle
 
 		end %******************************* END write() ******************
 
-		% Writes the currently loaded variables to a KV file on disk.
+		% Writes the currently loaded variables to a DDF file on disk.
 		%
 		% Options: (Order does not matter. Case-sensitive)
 		% 	v: Save all matrices as vertical
@@ -483,21 +483,21 @@ classdef KvFile < handle
 			fstr = out;
 		end %*********************** END swrite() *************************
 
-		function read(obj, filename) %********************* read() *********************
+		function load(obj, filename) %********************* load() *********************
 			
 			obj.readVersion(filename);
 			
 			if obj.fileVersion == -1
-				obj.logErr(strcat("Failed to read file '", filename ,"'. Unable to determine file version."))
+				obj.logErr(strcat("Failed to load file '", filename ,"'. Unable to determine file version."))
 				return;
 			end
 			
 			if obj.fileVersion == 2
-				obj.readKV1_V2(filename)
+				obj.readDDF_V1(filename)
 				
 			end
 			
-		end %**************************** END read() **********************
+		end %**************************** END load() **********************
 		
 		function readVersion(obj, fileIn) %********************** readVersion() ******
 			
@@ -552,7 +552,7 @@ classdef KvFile < handle
 			
 		end %************************************ END readVersion() *******
 		
-        function readKV1_V2(obj, fileIn) %***** readKV1_V2() *****
+        function readDDF_V1(obj, fileIn) %***** readDDF_V1() *****
 
             lnum = 0;
 			foundHeader = 0;
@@ -648,7 +648,7 @@ classdef KvFile < handle
 						elseif words(1).str == "b"
 							newVal = str2logical(words(3).str);
 						end
-						temp = KvItem(newVal, words(2).str, "");
+						temp = DDFItem(newVal, words(2).str, "");
 						if isnan(temp.val)
 							obj.logErrLn('Invlaid variable value', lnum);
 							return;
@@ -679,8 +679,8 @@ classdef KvFile < handle
 						end
 					elseif words(1).str == "s"
 
-						%Create new KvItem
-						temp = KvItem("", words(2).str, "");
+						%Create new DDFItem
+						temp = DDFItem("", words(2).str, "");
 
 						%Get string contents
 						val = getString(sline);
@@ -717,8 +717,8 @@ classdef KvFile < handle
 
 					else %is m<X>
 
-						%Create new KvItem
-						temp = KvItem("", words(2).str, "");
+						%Create new DDFItem
+						temp = DDFItem("", words(2).str, "");
 						type = "";
 						if ~isempty(find(char(words(1).str)=='d', 1))
 							temp.type = "d";
@@ -927,8 +927,8 @@ classdef KvFile < handle
 
 					for di=1:length(types)
 
-						%Create new KvItem
-						temp = KvItem("", names(di).str, "");
+						%Create new DDFItem
+						temp = DDFItem("", names(di).str, "");
 						typestr = char(types(di).str);
 						typestr = string(typestr(3));
 						temp.type = typestr;
@@ -983,7 +983,7 @@ classdef KvFile < handle
 				end %-------------------- END check match file element ----
 
             end %- - - - - - - - - - - - END Loop Through File - - - - - -
-		end %************************ END readKV1_V2() ********************
+		end %************************ END readDDF_V1() ********************
 
 
 

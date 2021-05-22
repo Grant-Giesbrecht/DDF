@@ -1,4 +1,4 @@
-classdef KvItem < handle
+classdef DDFItem < handle
 	properties
 		type
 		dimension
@@ -11,7 +11,7 @@ classdef KvItem < handle
 	
 	methods  % ************* METHODS ************************
 		
-		function obj=KvItem(value, name, desc)
+		function obj=DDFItem(value, name, desc)
 			
 			%Get value, name, and description
 			obj.val = value;
@@ -170,7 +170,7 @@ classdef KvItem < handle
 		
 		function strout=str(obj)
 			descstr = strcat(" (", '"', obj.desc, '"', ")")
-			strout = strcat("<KvItem(", obj.getTypeStr() , ") ", obj.name , "=", string(obj.val) , descstr, ">");
+			strout = strcat("<DDFItem(", obj.getTypeStr() , ") ", obj.name , "=", string(obj.val) , descstr, ">");
 		end
 		
 	end		% ************* END METHODS ************************
