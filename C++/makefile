@@ -7,12 +7,12 @@ endif
 
 INCLUDES = -I/Users/grantgiesbrecht/Documents/GitHub
 LIBS = -L/Users/grantgiesbrecht/Documents/GitHub/gstd -lgstd -L/Users/grantgiesbrecht/Documents/GitHub/KTable -lktable
-OBJS = cppkv.o
+OBJS = cppddf.o
 
-simpletest: ../examples/cppkv_example.cpp
-	$(CC) -o ../examples/cppkv_example ../examples/cppkv_example.cpp $(INCLUDES) $(LIBS)
-	../examples/cppkv_example
+simpletest: ../examples/cppddf_example.cpp
+	$(CC) -o ../examples/cppddf_example ../examples/cppddf_example.cpp $(INCLUDES) $(LIBS)
+	../examples/cppddf_example
 
-testall: ../examples/cppkv_read_all_tests.cpp
-	$(CC) -o ../examples/cppkv_read_all_tests ../examples/cppkv_read_all_tests.cpp $(INCLUDES) $(LIBS)
-	../examples/cppkv_read_all_tests
+testall: ../examples/cppddf_read_all_tests.cpp
+	$(CC) -o ../examples/cppddf_read_all_tests ../examples/cppddf_read_all_tests.cpp $(INCLUDES) $(LIBS)
+	../examples/cppddf_read_all_tests

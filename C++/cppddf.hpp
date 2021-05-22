@@ -1,5 +1,5 @@
-#ifndef CPPKV_HPP
-#define CPPKV_HPP
+#ifndef CPPDDF_HPP
+#define CPPDDF_HPP
 
 #include <cctype>
 #include <cstdio>
@@ -27,7 +27,7 @@ any variable and a '.<type>' after the operator() call allows quick
 initialization of values.
 
 ex:
-vector<double> Vin = kvf("Vin").md;
+vector<double> Vin = ddf("Vin").md;  //s.t. ddf is a DDFItem
 */
 typedef struct{
 	//Non-matrix variables
@@ -44,12 +44,12 @@ typedef struct{
 	std::vector<std::vector<double> > md2;
 	std::vector<std::vector<std::string> > ms2;
 	std::vector<std::vector<bool> > mb2;
-}KVItem;
+}DDFItem;
 
 /*
-The KVFlatItem, ..1DITem, and ..2DItem are used to make a simple database of
-variables inside the KVFile object. Three vectors, once of each type of struct
-contain all of the object's variables. One vector of KVItems could contain them
+The DDFFlatItem, ..1DITem, and ..2DItem are used to make a simple database of
+variables inside the DDFIO object. Three vectors, once of each type of struct
+contain all of the object's variables. One vector of DDFItems could contain them
 all, but would waste more memory as 1/9 variables in ea. struct would be used
 instead of 1/3. This especially helps save memory when few matrices or 2D
 matrices are used.
@@ -63,7 +63,7 @@ typedef struct{
 	std::string name;
 	char type;
 	std::string description; //TODO: Add code to verify desc doesn't contain newline when added by user
-}KVFlatItem;
+}DDFFlatItem;
 
 typedef struct{
 	std::vector<double> md;
@@ -73,7 +73,7 @@ typedef struct{
 	std::string name;
 	char type;
 	std::string description;
-}KV1DItem;
+}DDF1DItem;
 
 typedef struct{
 	std::vector<std::vector<double> > md2;
@@ -83,19 +83,19 @@ typedef struct{
 	std::string name;
 	char type;
 	std::string description;
-}KV2DItem;
+}DDF2DItem;
 
 //***************************************************************************//
 //**			CLASS DEFINITIONS									   **//
 //***************************************************************************//
 
-class KVFile{
+class DDFIO{
 public:
 
 	//************ INITIALIZERS
 
-	KVFile();
-	KVFile(std::string fileIn);
+	DDFIO();
+	DDFIO(std::string fileIn);
 
 	//************ ADD VARIABLES
 
@@ -118,16 +118,16 @@ public:
 
 	//*********** READ VARIABLES
 
-	KVItem operator()(std::string varName);
+	DDFItem operator()(std::string varName);
 
 
 	//********** FILE I/O
 
 	std::string swrite(std::string fileOut, std::string options=""); //TODO: swrite should not have a 'fileOut' parameter
 	bool write(std::string fileOut, std::string options="");
-	bool read(std::string fileIn, std::string options="");
-	bool readKV1_V2(std::string fileIn, std::string options="");
-	bool clread(std::string fileIn);
+	bool load(std::string fileIn, std::string options="");
+	bool loadDDF_V1(std::string fileIn, std::string options="");
+	bool clload(std::string fileIn);
 
 
 	//*************** VARIABLE MANAGEMENT
@@ -152,9 +152,9 @@ public:
 
 private:
 
-	std::vector<KVFlatItem> variablesFlat;
-	std::vector<KV1DItem> variables1D;
-	std::vector<KV2DItem> variables2D;
+	std::vector<DDFFlatItem> variablesFlat;
+	std::vector<DDF1DItem> variables1D;
+	std::vector<DDF2DItem> variables2D;
 
 	void initialize();
 
@@ -162,14 +162,14 @@ private:
 	bool nameInUse(std::string name);
 
 	void sortMatrices();
-	size_t matrixLength(KV1DItem m);
-	size_t matrixLength(KV2DItem m);
+	size_t matrixLength(DDF1DItem m);
+	size_t matrixLength(DDF2DItem m);
 
 	double linaccess(std::vector<std::vector<double> > m, size_t idx);
 	bool linaccess(std::vector<std::vector<bool> > m, size_t idx);
 	std::string linaccess(std::vector<std::vector<std::string> > m, size_t idx);
 
-	bool isRowEnd(KV2DItem m, size_t idx);
+	bool isRowEnd(DDF2DItem m, size_t idx);
 
 	void init_ktable(KTable& kt);
 
@@ -188,24 +188,24 @@ private:
 //***************************************************************************//
 //***************** INITIALIZERS
 
-KVFile::KVFile(){
+DDFIO::DDFIO(){
 	initialize();
 }
 
 /*
-Reads the input file. Same as calling blank initializer combined with read()
+Reads the input file. Same as calling blank initializer combined with load()
 */
-KVFile::KVFile(std::string fileIn){
+DDFIO::DDFIO(std::string fileIn){
 
 	initialize();
 
-	read(fileIn);
+	load(fileIn);
 }
 
 /*
 Initialize the object
 */
-void KVFile::initialize(){
+void DDFIO::initialize(){
 
 	fileVersion = CURRENT_VERSION;
 
@@ -217,17 +217,17 @@ void KVFile::initialize(){
 //****** Non-matrix variables **********
 
 /*
-Adds a variable to the KVFile object. Retuns without adding variable if name is
+Adds a variable to the DDFIO object. Retuns without adding variable if name is
 invalid or already in use.
 */
 
 
-void KVFile::add(double newVar, std::string varName, std::string desc){
+void DDFIO::add(double newVar, std::string varName, std::string desc){
 
 	//Check that name is valid and unclaimed
 	if ( (!isValidName(varName)) || nameInUse(varName)) return;
 
-	KVFlatItem newItem; 	//Create new item
+	DDFFlatItem newItem; 	//Create new item
 	newItem.d = newVar;		//Give new item correct value
 	newItem.name = varName; //Give new item
 	newItem.type = 'd';		//Specify type
@@ -237,12 +237,12 @@ void KVFile::add(double newVar, std::string varName, std::string desc){
 
 }
 
-void KVFile::add(std::string newVar, std::string varName, std::string desc){
+void DDFIO::add(std::string newVar, std::string varName, std::string desc){
 
 	//Check that name is valid and unclaimed
 	if ( (!isValidName(varName)) || nameInUse(varName)) return;
 
-	KVFlatItem newItem; 	//Create new item
+	DDFFlatItem newItem; 	//Create new item
 	newItem.s = newVar;		//Give new item correct value
 	newItem.name = varName; //Give new item
 	newItem.type = 's';		//Specify type
@@ -252,12 +252,12 @@ void KVFile::add(std::string newVar, std::string varName, std::string desc){
 
 }
 
-void KVFile::add(bool newVar, std::string varName, std::string desc){
+void DDFIO::add(bool newVar, std::string varName, std::string desc){
 
 	//Check that name is valid and unclaimed
 	if ( (!isValidName(varName)) || nameInUse(varName)) return;
 
-	KVFlatItem newItem; 	//Create new item
+	DDFFlatItem newItem; 	//Create new item
 	newItem.b = newVar;		//Give new item correct value
 	newItem.name = varName; //Give new item
 	newItem.type = 'b';		//Specify type
@@ -269,12 +269,12 @@ void KVFile::add(bool newVar, std::string varName, std::string desc){
 
 //******  1D matrix variables **********
 
-void KVFile::add(std::vector<double> newVar, std::string varName, std::string desc){
+void DDFIO::add(std::vector<double> newVar, std::string varName, std::string desc){
 
 	//Check that name is valid and unclaimed
 	if ( (!isValidName(varName)) || nameInUse(varName)) return;
 
-	KV1DItem newItem; 		//Create new item
+	DDF1DItem newItem; 		//Create new item
 	newItem.md = newVar;	//Give new item correct value
 	newItem.name = varName; //Give new item
 	newItem.type = 'd';		//Specify type
@@ -284,12 +284,12 @@ void KVFile::add(std::vector<double> newVar, std::string varName, std::string de
 
 }
 
-void KVFile::add(std::vector<std::string> newVar, std::string varName, std::string desc){
+void DDFIO::add(std::vector<std::string> newVar, std::string varName, std::string desc){
 
 	//Check that name is valid and unclaimed
 	if ( (!isValidName(varName)) || nameInUse(varName)) return;
 
-	KV1DItem newItem; 		//Create new item
+	DDF1DItem newItem; 		//Create new item
 	newItem.ms = newVar;	//Give new item correct value
 	newItem.name = varName; //Give new item
 	newItem.type = 's';		//Specify type
@@ -299,12 +299,12 @@ void KVFile::add(std::vector<std::string> newVar, std::string varName, std::stri
 
 }
 
-void KVFile::add(std::vector<bool> newVar, std::string varName, std::string desc){
+void DDFIO::add(std::vector<bool> newVar, std::string varName, std::string desc){
 
 	//Check that name is valid and unclaimed
 	if ( (!isValidName(varName)) || nameInUse(varName)) return;
 
-	KV1DItem newItem; 		//Create new item
+	DDF1DItem newItem; 		//Create new item
 	newItem.mb = newVar;	//Give new item correct value
 	newItem.name = varName; //Give new item
 	newItem.type = 'b';		//Specify type
@@ -316,12 +316,12 @@ void KVFile::add(std::vector<bool> newVar, std::string varName, std::string desc
 
 //******  2D matrix variables **********
 
-void KVFile::add(std::vector<std::vector<double> > newVar, std::string varName, std::string desc){
+void DDFIO::add(std::vector<std::vector<double> > newVar, std::string varName, std::string desc){
 
 	//Check that name is valid and unclaimed
 	if ( (!isValidName(varName)) || nameInUse(varName)) return;
 
-	KV2DItem newItem; 		//Create new item
+	DDF2DItem newItem; 		//Create new item
 	newItem.md2 = newVar;	//Give new item correct value
 	newItem.name = varName; //Give new item
 	newItem.type = 'd';		//Specify type
@@ -331,12 +331,12 @@ void KVFile::add(std::vector<std::vector<double> > newVar, std::string varName, 
 
 }
 
-void KVFile::add(std::vector<std::vector<std::string> > newVar, std::string varName, std::string desc){
+void DDFIO::add(std::vector<std::vector<std::string> > newVar, std::string varName, std::string desc){
 
 	//Check that name is valid and unclaimed
 	if ( (!isValidName(varName)) || nameInUse(varName)) return;
 
-	KV2DItem newItem; 		//Create new item
+	DDF2DItem newItem; 		//Create new item
 	newItem.ms2 = newVar;	//Give new item correct value
 	newItem.name = varName; //Give new item
 	newItem.type = 's';		//Specify type
@@ -346,12 +346,12 @@ void KVFile::add(std::vector<std::vector<std::string> > newVar, std::string varN
 
 }
 
-void KVFile::add(std::vector<std::vector<bool> > newVar, std::string varName, std::string desc){
+void DDFIO::add(std::vector<std::vector<bool> > newVar, std::string varName, std::string desc){
 
 	//Check that name is valid and unclaimed
 	if ( (!isValidName(varName)) || nameInUse(varName)) return;
 
-	KV2DItem newItem; 		//Create new item
+	DDF2DItem newItem; 		//Create new item
 	newItem.mb2 = newVar;	//Give new item correct value
 	newItem.name = varName; //Give new item
 	newItem.type = 'b';		//Specify type
@@ -365,7 +365,7 @@ void KVFile::add(std::vector<std::vector<bool> > newVar, std::string varName, st
 //*************** FILE I/O
 
 /*
-Writes the currently loaded variables to a KV file on disk.
+Writes the currently loaded variables to a DDF file on disk.
 
 Options: (Order does not matter. Case-sensitive)
 	v: Save all matrices as vertical
@@ -379,9 +379,9 @@ Options: (Order does not matter. Case-sensitive)
 
 In the event of an error, it returns a blank string.
 */
-std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Impliment write()
+std::string DDFIO::swrite(std::string fileOut, std::string options){ //TODO: Impliment write()
 
-	std::string kvf; //This is the string which will contain the file
+	std::string ddf; //This is the string which will contain the file
 
 	bool vertical_mode = false;
 	bool optimize = false;
@@ -415,13 +415,13 @@ std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Im
 	}
 
 	//********************** Write version statement *************************//
-	kvf = kvf + "#VERSION " + std::string(std::to_string(CURRENT_VERSION)) + "\n";
-	if (!optimize) kvf = kvf + "\n";
+	ddf = ddf + "#VERSION " + std::string(std::to_string(CURRENT_VERSION)) + "\n";
+	if (!optimize) ddf = ddf + "\n";
 
 	//*********************** Write header statement *************************//
 	if (header.length() > 0 && !decapitate){
-		kvf = kvf + "#HEADER\n" + header + "\n#HEADER\n";
-		if (!optimize) kvf = kvf + "\n";
+		ddf = ddf + "#HEADER\n" + header + "\n#HEADER\n";
+		if (!optimize) ddf = ddf + "\n";
 	}
 
 
@@ -433,19 +433,19 @@ std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Im
 		//Write type, name, value
 		switch(variablesFlat[i].type){
 			case('d'):
-				kvf = kvf + "d " + variablesFlat[i].name + " " + gstd::to_gstring(variablesFlat[i].d) + term_char; //Add variable
-				if (variablesFlat[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variablesFlat[i].description; //Add description if applicable
-				kvf = kvf + "\n"; //Add newline
+				ddf = ddf + "d " + variablesFlat[i].name + " " + gstd::to_gstring(variablesFlat[i].d) + term_char; //Add variable
+				if (variablesFlat[i].description.length() > 0 && show_descriptions) ddf = ddf + " ?" + variablesFlat[i].description; //Add description if applicable
+				ddf = ddf + "\n"; //Add newline
 				break;
 			case('b'):
-				kvf = kvf + "b " + variablesFlat[i].name + " " + bool_to_string(variablesFlat[i].b) + term_char;  //Add variable
-				if (variablesFlat[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variablesFlat[i].description; //Add description if applicable
-				kvf = kvf + "\n"; //Add newline
+				ddf = ddf + "b " + variablesFlat[i].name + " " + bool_to_string(variablesFlat[i].b) + term_char;  //Add variable
+				if (variablesFlat[i].description.length() > 0 && show_descriptions) ddf = ddf + " ?" + variablesFlat[i].description; //Add description if applicable
+				ddf = ddf + "\n"; //Add newline
 				break;
 			case('s'):
-				kvf = kvf + "s " + variablesFlat[i].name + " \"" + variablesFlat[i].s + "\"" + term_char;  //Add variable
-				if (variablesFlat[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variablesFlat[i].description; //Add description if applicable
-				kvf = kvf + "\n"; //Add newline
+				ddf = ddf + "s " + variablesFlat[i].name + " \"" + variablesFlat[i].s + "\"" + term_char;  //Add variable
+				if (variablesFlat[i].description.length() > 0 && show_descriptions) ddf = ddf + " ?" + variablesFlat[i].description; //Add description if applicable
+				ddf = ddf + "\n"; //Add newline
 				break;
 			default:
 				return ""; //An error occured
@@ -464,8 +464,8 @@ std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Im
 			//************************ 1D ******************************
 
 			//Start vertical block
-			kvf = kvf + "#VERTICAL\n";
-			if (!optimize) kvf = kvf + "\n";
+			ddf = ddf + "#VERTICAL\n";
+			if (!optimize) ddf = ddf + "\n";
 
 			//To keep everything aligned, use KTable
 			KTable kt;
@@ -574,21 +574,21 @@ std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Im
 
 
 			//Add table's string as vertical matrix statement
-			kvf = kvf + kt.str();
+			ddf = ddf + kt.str();
 
 
 			//End vertical block
-			if (!optimize) kvf = kvf + "\n";
-			kvf = kvf + "#VERTICAL\n";
+			if (!optimize) ddf = ddf + "\n";
+			ddf = ddf + "#VERTICAL\n";
 		}
 
 		{
 			//******************************** 2D ******************************
 
 			//Start vertical block
-			if (!optimize) kvf = kvf + "\n";
-			kvf = kvf + "#VERTICAL\n";
-			if (!optimize) kvf = kvf + "\n";
+			if (!optimize) ddf = ddf + "\n";
+			ddf = ddf + "#VERTICAL\n";
+			if (!optimize) ddf = ddf + "\n";
 
 			//To keep everything aligned, use KTable
 			KTable kt;
@@ -700,12 +700,12 @@ std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Im
 
 
 			//Add table's string as vertical matrix statement
-			kvf = kvf + kt.str();
+			ddf = ddf + kt.str();
 
 
 			//End vertical block
-			if (!optimize) kvf = kvf + "\n";
-			kvf = kvf + "#VERTICAL\n";
+			if (!optimize) ddf = ddf + "\n";
+			ddf = ddf + "#VERTICAL\n";
 		}
 
 
@@ -720,47 +720,47 @@ std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Im
 				case('d'):
 
 					//print type, name, open brackets
-					kvf = kvf + "m<d> " + variables1D[i].name + " [";
+					ddf = ddf + "m<d> " + variables1D[i].name + " [";
 
 					//For each element...
 					for (size_t k = 0 ; k < variables1D[i].md.size() ; k++){
-						if (k != 0) kvf = kvf + ", "; //Add comma if not first element
-						kvf = kvf + gstd::to_gstring(variables1D[i].md[k]); //Add variable string
+						if (k != 0) ddf = ddf + ", "; //Add comma if not first element
+						ddf = ddf + gstd::to_gstring(variables1D[i].md[k]); //Add variable string
 					}
 
-					kvf = kvf + "]" + term_char;  //Add termination
-					if (variables1D[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variables1D[i].description; //Add description if applicable
-					kvf = kvf + "\n"; //Add newline
+					ddf = ddf + "]" + term_char;  //Add termination
+					if (variables1D[i].description.length() > 0 && show_descriptions) ddf = ddf + " ?" + variables1D[i].description; //Add description if applicable
+					ddf = ddf + "\n"; //Add newline
 					break;
 				case('b'):
 
 					//print type, name, open brackets
-					kvf = kvf + "m<b> " + variables1D[i].name + " [";
+					ddf = ddf + "m<b> " + variables1D[i].name + " [";
 
 					//For each element...
 					for (size_t k = 0 ; k < variables1D[i].mb.size() ; k++){
-						if (k != 0) kvf = kvf + ", "; //Add comma if not first element
-						kvf = kvf + bool_to_string(variables1D[i].mb[k]); //Add variable string
+						if (k != 0) ddf = ddf + ", "; //Add comma if not first element
+						ddf = ddf + bool_to_string(variables1D[i].mb[k]); //Add variable string
 					}
 
-					kvf = kvf + "]" + term_char;  //Add termination
-					if (variables1D[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variables1D[i].description; //Add description if applicable
-					kvf = kvf + "\n"; //Add newline
+					ddf = ddf + "]" + term_char;  //Add termination
+					if (variables1D[i].description.length() > 0 && show_descriptions) ddf = ddf + " ?" + variables1D[i].description; //Add description if applicable
+					ddf = ddf + "\n"; //Add newline
 					break;
 				case('s'):
 
 					//print type, name, open brackets
-					kvf = kvf + "m<s> " + variables1D[i].name + " [";
+					ddf = ddf + "m<s> " + variables1D[i].name + " [";
 
 					//For each element...
 					for (size_t k = 0 ; k < variables1D[i].ms.size() ; k++){
-						if (k != 0) kvf = kvf + ", "; //Add comma if not first element
-						kvf = kvf + "\"" + variables1D[i].ms[k] + "\""; //Add variable string
+						if (k != 0) ddf = ddf + ", "; //Add comma if not first element
+						ddf = ddf + "\"" + variables1D[i].ms[k] + "\""; //Add variable string
 					}
 
-					kvf = kvf + "]" + term_char;  //Add termination
-					if (variables1D[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variables1D[i].description; //Add description if applicable
-					kvf = kvf + "\n"; //Add newline
+					ddf = ddf + "]" + term_char;  //Add termination
+					if (variables1D[i].description.length() > 0 && show_descriptions) ddf = ddf + " ?" + variables1D[i].description; //Add description if applicable
+					ddf = ddf + "\n"; //Add newline
 					break;
 
 				default:
@@ -777,65 +777,65 @@ std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Im
 				case('d'):
 
 					//print type, name, open brackets
-					kvf = kvf + "m<d> " + variables2D[i].name + " [";
+					ddf = ddf + "m<d> " + variables2D[i].name + " [";
 
 					//For each row...
 					for (size_t k = 0 ; k < variables2D[i].md2.size() ; k++){
 
-						if (k != 0) kvf = kvf + "; "; //Add semicolon if not first row
+						if (k != 0) ddf = ddf + "; "; //Add semicolon if not first row
 
 						//Write row
 						for (size_t j = 0 ; j < variables2D[i].md2[k].size() ; j++){ //For each element...
-							if (j != 0) kvf = kvf + ", "; //Add comma if not first element
-							kvf = kvf + gstd::to_gstring(variables2D[i].md2[k][j]); //Add variable string
+							if (j != 0) ddf = ddf + ", "; //Add comma if not first element
+							ddf = ddf + gstd::to_gstring(variables2D[i].md2[k][j]); //Add variable string
 						}
 					}
 
-					kvf = kvf + "]" + term_char;  //Add termination
-					if (variables2D[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variables2D[i].description; //Add description if applicable
-					kvf = kvf + "\n"; //Add newline
+					ddf = ddf + "]" + term_char;  //Add termination
+					if (variables2D[i].description.length() > 0 && show_descriptions) ddf = ddf + " ?" + variables2D[i].description; //Add description if applicable
+					ddf = ddf + "\n"; //Add newline
 					break;
 				case('b'):
 
 					//print type, name, open brackets
-					kvf = kvf + "m<b> " + variables2D[i].name + " [";
+					ddf = ddf + "m<b> " + variables2D[i].name + " [";
 
 					//For each row...
 					for (size_t k = 0 ; k < variables2D[i].mb2.size() ; k++){
 
-						if (k != 0) kvf = kvf + "; "; //Add semicolon if not first row
+						if (k != 0) ddf = ddf + "; "; //Add semicolon if not first row
 
 						//Write row
 						for (size_t j = 0 ; j < variables2D[i].mb2[k].size() ; j++){ //For each element...
-							if (j != 0) kvf = kvf + ", "; //Add comma if not first element
-							kvf = kvf + bool_to_string(variables2D[i].mb2[k][j]); //Add variable string
+							if (j != 0) ddf = ddf + ", "; //Add comma if not first element
+							ddf = ddf + bool_to_string(variables2D[i].mb2[k][j]); //Add variable string
 						}
 					}
 
-					kvf = kvf + "]" + term_char;  //Add termination
-					if (variables2D[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variables2D[i].description; //Add description if applicable
-					kvf = kvf + "\n"; //Add newline
+					ddf = ddf + "]" + term_char;  //Add termination
+					if (variables2D[i].description.length() > 0 && show_descriptions) ddf = ddf + " ?" + variables2D[i].description; //Add description if applicable
+					ddf = ddf + "\n"; //Add newline
 					break;
 				case('s'):
 
 					//print type, name, open brackets
-					kvf = kvf + "m<s> " + variables2D[i].name + " [";
+					ddf = ddf + "m<s> " + variables2D[i].name + " [";
 
 					//For each row...
 					for (size_t k = 0 ; k < variables2D[i].ms2.size() ; k++){
 
-						if (k != 0) kvf = kvf + "; "; //Add semicolon if not first row
+						if (k != 0) ddf = ddf + "; "; //Add semicolon if not first row
 
 						//Write row
 						for (size_t j = 0 ; j < variables2D[i].ms2[k].size() ; j++){ //For each element...
-							if (j != 0) kvf = kvf + ", "; //Add comma if not first element
-							kvf = kvf + "\"" + variables2D[i].ms2[k][j] + "\""; //Add variable string
+							if (j != 0) ddf = ddf + ", "; //Add comma if not first element
+							ddf = ddf + "\"" + variables2D[i].ms2[k][j] + "\""; //Add variable string
 						}
 					}
 
-					kvf = kvf + "]" + term_char;  //Add termination
-					if (variables2D[i].description.length() > 0 && show_descriptions) kvf = kvf + " ?" + variables2D[i].description; //Add description if applicable
-					kvf = kvf + "\n"; //Add newline
+					ddf = ddf + "]" + term_char;  //Add termination
+					if (variables2D[i].description.length() > 0 && show_descriptions) ddf = ddf + " ?" + variables2D[i].description; //Add description if applicable
+					ddf = ddf + "\n"; //Add newline
 					break;
 				default:
 					return ""; //An error occured
@@ -846,14 +846,14 @@ std::string KVFile::swrite(std::string fileOut, std::string options){ //TODO: Im
 
 
 
-	return kvf;
+	return ddf;
 }
 
 /*
-Writes a KV file to disk. Returns true if successful, else false. Options are passed
-to KVFile::swrite - see its documentation for options.
+Writes a DDF file to disk. Returns true if successful, else false. Options are passed
+to DDFIO::swrite - see its documentation for options.
 */
-bool KVFile::write(std::string fileOut, std::string options){
+bool DDFIO::write(std::string fileOut, std::string options){
 
 	//Generate string
 	std::string fileString = swrite(fileOut, options);
@@ -874,11 +874,11 @@ bool KVFile::write(std::string fileOut, std::string options){
 }
 
 /*
-Reads a KV file. Returns true if successful, else false.
+Reads a DDF file. Returns true if successful, else false.
 
 TODO: Accept earlier standards.
 */
-bool KVFile::read(std::string fileIn, std::string options){ //TODO: Impliment read()
+bool DDFIO::load(std::string fileIn, std::string options){ //TODO: Impliment load()
 
 	//Open file - return if fail
 	std::ifstream file(fileIn.c_str());
@@ -904,16 +904,16 @@ bool KVFile::read(std::string fileIn, std::string options){ //TODO: Impliment re
 		std::cout << "ERROR: Version 1.x not supported yet" << std::endl;
 		return false;
 	}else if(fileVersion < 3){
-		return readKV1_V2(fileIn, options);
+		return loadDDF_V1(fileIn, options);
 	}
 
 	return false;
 }
 
 /*
-Read KV1 version 2 file. Returns true if read success.
+Read DDF version 1 file. Returns true if read success.
 */
-bool KVFile::readKV1_V2(std::string fileIn, std::string options){
+bool DDFIO::loadDDF_V1(std::string fileIn, std::string options){
 
 	//Open file - return if fail
 	std::ifstream file(fileIn.c_str());
@@ -1012,7 +1012,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 			size_t optional_features_start = 3;
 			if (words[0].str == "d"){ //Double
 
-				KVFlatItem temp;
+				DDFFlatItem temp;
 				temp.name = words[1].str;
 				temp.type = 'd';
 				try{
@@ -1047,7 +1047,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 			}else if(words[0].str == "b"){ //Boolean
 
-				KVFlatItem temp;
+				DDFFlatItem temp;
 				temp.name = words[1].str;
 				temp.type = 'b';
 				try{
@@ -1082,7 +1082,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 			}else if(words[0].str == "s"){ //string
 
-				KVFlatItem temp;
+				DDFFlatItem temp;
 				temp.name = words[1].str;
 				temp.type = 's';
 				try{
@@ -1128,7 +1128,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 			}else if(words[0].str == "m<d>" && !is_2d(line)){ //Double matrix 1D
 
-				KV1DItem temp;
+				DDF1DItem temp;
 				temp.name = words[1].str;
 				temp.type = 'd';
 
@@ -1180,7 +1180,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 			}else if(words[0].str == "m<b>" && !is_2d(line)){ //Bool matrix 1D
 
-				KV1DItem temp;
+				DDF1DItem temp;
 				temp.name = words[1].str;
 				temp.type = 'b';
 
@@ -1232,7 +1232,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 			}else if(words[0].str == "m<s>" && !is_2d(line)){ //String matrix 1D
 
-				KV1DItem temp;
+				DDF1DItem temp;
 				temp.name = words[1].str;
 				temp.type = 's';
 
@@ -1284,7 +1284,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 			}else if(words[0].str == "m<d>"){ //Double matrix 2D
 
-				KV2DItem temp;
+				DDF2DItem temp;
 				temp.name = words[1].str;
 				temp.type = 'd';
 
@@ -1336,7 +1336,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 			}else if(words[0].str == "m<b>"){ //Bool matrix 2D
 
-				KV2DItem temp;
+				DDF2DItem temp;
 				temp.name = words[1].str;
 				temp.type = 'b';
 
@@ -1388,7 +1388,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 			}else if(words[0].str == "m<s>"){ //String matrix 2D
 
-				KV2DItem temp;
+				DDF2DItem temp;
 				temp.name = words[1].str;
 				temp.type = 's';
 
@@ -1572,7 +1572,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 			for (size_t i = 0 ; i < names.size() ; i++){
 				if (is_2dmat[i]){
 
-					KV2DItem temp;
+					DDF2DItem temp;
 					std::vector<double> td;
 					std::vector<bool> tb;
 					std::vector<std::string> ts;
@@ -1603,7 +1603,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 							data_str_wo_semicolon = data_str[i][k].substr(0, data_str[i][k].length()-1); //Remove semicolon so it doesnt mess up data conversion
 						}
 
-						//Translate data string and save into kv-item
+						//Translate data string and save into DDF-item
 						if (types[i] == "m<d>"){
 							try{
 								td.push_back(stod(data_str_wo_semicolon));
@@ -1645,7 +1645,7 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 
 				}else{
 
-					KV1DItem temp;
+					DDF1DItem temp;
 
 					if (types[i] == "m<d>"){
 						temp.type = 'd';
@@ -1697,9 +1697,9 @@ bool KVFile::readKV1_V2(std::string fileIn, std::string options){
 	return true;
 }
 
-bool KVFile::clread(std::string fileIn){
+bool DDFIO::clload(std::string fileIn){
 	clear();
-	return read(fileIn);
+	return load(fileIn);
 }
 
 
@@ -1707,15 +1707,15 @@ bool KVFile::clread(std::string fileIn){
 //***************************************************************************//
 //*************** VARIABLE MANAGEMENT
 
-bool KVFile::checkContains(std::vector<std::string> names){ //TODO: impliment checkContains()
+bool DDFIO::checkContains(std::vector<std::string> names){ //TODO: impliment checkContains()
 	std::cout << "Oops! Need to impliment this :)" << std::endl;
 	return false;
 }
 
 /*
-Clears all variables from the KVFile object.
+Clears all variables from the DDFIO object.
 */
-void KVFile::clear(){
+void DDFIO::clear(){
 	fileVersion = -1;
 	header = "";
 	variablesFlat.clear();
@@ -1725,9 +1725,9 @@ void KVFile::clear(){
 
 /*
 Returns the number of variables of all types combined that are presently loaded
-in this KVFile object.
+in this DDFIO object.
 */
-size_t KVFile::numVar(){
+size_t DDFIO::numVar(){
 	return variablesFlat.size() + variables1D.size() + variables2D.size();
 }
 
@@ -1737,28 +1737,28 @@ size_t KVFile::numVar(){
 /*
 Sets the header
 */
-void KVFile::setHeader(std::string h){
+void DDFIO::setHeader(std::string h){
 	header = h;
 }
 
 /*
 Returns the header
 */
-std::string KVFile::getHeader(){
+std::string DDFIO::getHeader(){
 	return header;
 }
 
 /*
 Returns the file's verion.
 */
-double KVFile::getVersion(){
+double DDFIO::getVersion(){
 	return fileVersion;
 }
 
 /*
 Returns the error status
 */
-std::string KVFile::err(){
+std::string DDFIO::err(){
 	return err_str;
 }
 
@@ -1772,7 +1772,7 @@ Options:
 	- t: include variable type with name
 	- m: merge all names into one string, save in returned vector's index 0.
 */
-std::vector<std::string> KVFile::names(std::string options){
+std::vector<std::string> DDFIO::names(std::string options){
 
 	//Options
 	bool include_type = false;
@@ -1840,9 +1840,9 @@ std::vector<std::string> KVFile::names(std::string options){
 }
 
 /*
-Returns the contents of the KVFile object as a string.
+Returns the contents of the DDFIO object as a string.
 */
-std::string KVFile::show(){
+std::string DDFIO::show(){
 
 	std::string out = "";
 
@@ -2020,7 +2020,7 @@ Verifies that the proposed variable name is a valid variable name.
 
 Returns true if the name is valid.
 */
-bool KVFile::isValidName(std::string name){
+bool DDFIO::isValidName(std::string name){
 
 	//Ensure name is at least 1 character
 	if (name.length() < 1){
@@ -2047,7 +2047,7 @@ bool KVFile::isValidName(std::string name){
 /*
 Checks if the variable name is already in use. Returns true if in use.
 */
-bool KVFile::nameInUse(std::string name){
+bool DDFIO::nameInUse(std::string name){
 
 	//Check flat variables...
 	for (size_t i = 0 ; i < variablesFlat.size() ; i++){
@@ -2070,7 +2070,7 @@ bool KVFile::nameInUse(std::string name){
 /*
 Sorts the 1D and 2D matrices from largest to smallest.
 */
-void KVFile::sortMatrices(){
+void DDFIO::sortMatrices(){
 
 	//Sort 1D vector
 	for (size_t i = 1 ; i < variables1D.size() ; i++){ //For each matrix (skipping first) ...
@@ -2092,7 +2092,7 @@ void KVFile::sortMatrices(){
 
 		//Move matrix if required
 		if (j+1 == i){
-			KV1DItem temp = variables1D[i]; //Make a copy of the current matrix
+			DDF1DItem temp = variables1D[i]; //Make a copy of the current matrix
 
 			variables1D.erase(variables1D.begin() + i); 			//Erase at old location
 			variables1D.insert(variables1D.begin() + j+1, temp);	//Insert into new location
@@ -2120,7 +2120,7 @@ void KVFile::sortMatrices(){
 
 		//Move matrix if required
 		if (j+1 == i){
-			KV2DItem temp = variables2D[i]; //Make a copy of the current matrix
+			DDF2DItem temp = variables2D[i]; //Make a copy of the current matrix
 
 			variables2D.erase(variables2D.begin() + i); 			//Erase at old location
 			variables2D.insert(variables2D.begin() + j+1, temp);	//Insert into new location
@@ -2131,9 +2131,9 @@ void KVFile::sortMatrices(){
 }
 
 /*
-Calculates the total number of elements in the KVitem and returns it.
+Calculates the total number of elements in the DDFItem and returns it.
 */
-size_t KVFile::matrixLength(KV1DItem m){
+size_t DDFIO::matrixLength(DDF1DItem m){
 
 	switch(m.type){
 		case('d'):
@@ -2153,9 +2153,9 @@ size_t KVFile::matrixLength(KV1DItem m){
 
 /*
 Calculates the total number of elements (in all rows and cols, combined) in the
-KVitem and returns it.
+DDFItem and returns it.
 */
-size_t KVFile::matrixLength(KV2DItem m){
+size_t DDFIO::matrixLength(DDF2DItem m){
 
 	size_t l;
 
@@ -2203,7 +2203,7 @@ end of the preceeding row. Makes 2D vector look 1D in terms of indexing.
 
 Returns 'idx'-th value in 'm'. Returns -1 if idx out of range.
 */
-double KVFile::linaccess(std::vector<std::vector<double> > m, size_t idx){
+double DDFIO::linaccess(std::vector<std::vector<double> > m, size_t idx){
 
 	size_t count = 0;
 
@@ -2224,7 +2224,7 @@ end of the preceeding row. Makes 2D vector look 1D in terms of indexing.
 
 Returns 'idx'-th value in 'm'. Returns false if idx out of range.
 */
-bool KVFile::linaccess(std::vector<std::vector<bool> > m, size_t idx){
+bool DDFIO::linaccess(std::vector<std::vector<bool> > m, size_t idx){
 
 	size_t count = 0;
 
@@ -2245,7 +2245,7 @@ end of the preceeding row. Makes 2D vector look 1D in terms of indexing.
 
 Returns 'idx'-th value in 'm'. Returns blank if idx out of range.
 */
-std::string KVFile::linaccess(std::vector<std::vector<std::string> > m, size_t idx){
+std::string DDFIO::linaccess(std::vector<std::vector<std::string> > m, size_t idx){
 
 	size_t count = 0;
 
@@ -2267,7 +2267,7 @@ real 2D matrix.
 
 Also returns false if idx is out of bounds, or if any other error occurs.
 */
-bool KVFile::isRowEnd(KV2DItem m, size_t idx){
+bool DDFIO::isRowEnd(DDF2DItem m, size_t idx){
 
 	size_t count = 0;
 
@@ -2308,9 +2308,9 @@ bool KVFile::isRowEnd(KV2DItem m, size_t idx){
 }
 
 /*
-Initializes the KTable for use in generating vertical KV matrix statements.
+Initializes the KTable for use in generating vertical DDF matrix statements.
 */
-void KVFile::init_ktable(KTable& kt){
+void DDFIO::init_ktable(KTable& kt){
 
 	kt.table_title("");
 	kt.set(KTABLE_INTERWALLS, false);
@@ -2338,7 +2338,7 @@ std::string bool_to_string(bool b){
 }
 
 /*
-Accepts a string from a KV inline variable statement and determines if it represents
+Accepts a string from a DDF inline variable statement and determines if it represents
 a 2D matrix by seeing if a semicolon appears before a closing square bracket.
 */
 bool is_2d(std::string line){
