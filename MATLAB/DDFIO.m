@@ -23,7 +23,7 @@ classdef DDFIO < handle
 %	show - Display all contents of the DDFIO object
 %	write - Write the contents of the DDFIO object to a DDF file
 %	swrite - Write the contents of the DDFIO object to a DDF formatted string
-%	readDDF_V1 - Read a version 1 DDF file
+%	loadDDF_V1 - Read a version 1 DDF file
 %
 	properties   %************************ PROPERTIES *********************
 		varsFlat
@@ -53,7 +53,7 @@ classdef DDFIO < handle
 			
 			if nargin > 0
 				if class(varargin{1}) == "string"
-					obj.readDDF_V1(varargin{1});
+					obj.loadDDF_V1(varargin{1});
 				end
 			end
 		end %******************************* END INITIALIZER **************
@@ -493,7 +493,7 @@ classdef DDFIO < handle
 			end
 			
 			if obj.fileVersion == 2
-				obj.readDDF_V1(filename)
+				obj.loadDDF_V1(filename)
 				
 			end
 			
@@ -552,7 +552,7 @@ classdef DDFIO < handle
 			
 		end %************************************ END readVersion() *******
 		
-        function readDDF_V1(obj, fileIn) %***** readDDF_V1() *****
+        function loadDDF_V1(obj, fileIn) %***** loadDDF_V1() *****
 
             lnum = 0;
 			foundHeader = 0;
@@ -983,7 +983,7 @@ classdef DDFIO < handle
 				end %-------------------- END check match file element ----
 
             end %- - - - - - - - - - - - END Loop Through File - - - - - -
-		end %************************ END readDDF_V1() ********************
+		end %************************ END loadDDF_V1() ********************
 
 
 
