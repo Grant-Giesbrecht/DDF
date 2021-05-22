@@ -1,13 +1,13 @@
-# KV File Syntax
+# DDF File Syntax
 
 _NOTE: This project is still under development and the syntax rules are subject to change_
 
-This file describes the nitty gritty syntax details for version 2.0 KV files.
+This file describes the nitty gritty syntax details for version 1.0 DDF files.
 
 Note: When describing syntax, parenthesis will indicate optional components, and dollar signs will indicate parameter names that must be replaced with their actual values. In this document, literal dollar signs will be escaped with a backslash.
 
 ## File Elements
-Every KV file consists of these elements:
+Every DDF file consists of these elements:
   * __Version statements:__ Describes file version
   * __Header statements:__ Provides a description of the file contents (ie. the header)
   * __Inline comments:__ Indicated by double forward slashes, everything after the comment identifier is
@@ -18,20 +18,20 @@ Every KV file consists of these elements:
   * __Vertical variable__ statements: Declares a 1D or 2D matrix variable over multiple lines
 
 ## Data Types
-KV files support a limited number of data types intended to cover a large number of use cases without using
+DDF files support a limited number of data types intended to cover a large number of use cases without using
 data structures that are native to one language but may be too specific to have true analogs in most other
 languages. For that reason, version 2.0 supports only strings, booleans, doubles, and 1D and 2D matrices of
 these types.
 
 __But why tho??__ It might seem unnecessarily austere to limit the data types to 3 fundamental types, and I don't entirely
-disagree. However, it is core to the KV file design philosophy to be highly portable between languages so data
-read from KV files can be manipulated in any language in an intuitive way. Highly structured and nested
+disagree. However, it is core to the DDF file design philosophy to be highly portable between languages so data
+read from DDF files can be manipulated in any language in an intuitive way. Highly structured and nested
 storage formats obfuscate the available data and defeat this goal, even if they can store more
 data types.
 
 
 ## Version statement:
-The first line of every KV file must be a version statement in the format: `#VERSION $major$.$minor$`.
+The first line of every DDF file must be a version statement in the format: `#VERSION $major$.$minor$`.
 
 Ex: `#VERSION 2.0`.
 
@@ -59,10 +59,10 @@ _TODO: Remove semicolon support?_
 
 __TODO: Fix C++, Python, to remove comments as first step?__
 
-Variable statements are the primary means of storing data in KV files. Inline variable statements define a single variable on a single line. They follow the basic format of `$type$ $name$ $data$ (;)(?$variable-description$)`. The ending semicolon is optional, as is a variable description. Note that matrices of matrices (eg. `m<m<d>>`) are *not* supported or required. A 2D matrix uses the same declaration as a 1D matrix, however 3D matrices are not supported in version 2.0.
+Variable statements are the primary means of storing data in DDF files. Inline variable statements define a single variable on a single line. They follow the basic format of `$type$ $name$ $data$ (;)(?$variable-description$)`. The ending semicolon is optional, as is a variable description. Note that matrices of matrices (eg. `m<m<d>>`) are *not* supported or required. A 2D matrix uses the same declaration as a 1D matrix, however 3D matrices are not supported in version 2.0.
 
   * ### Data types:
-  The available data types in KV files are double precision floats, strings, booleans, and matrices of any one data type. Type is indicated with a single letter. Matrices accept the data type in angle brackets.
+  The available data types in DDF files are double precision floats, strings, booleans, and matrices of any one data type. Type is indicated with a single letter. Matrices accept the data type in angle brackets.
 
   Ex `m<d>` indicates a matrix (1D or 2D) of doubles.
 
@@ -121,7 +121,7 @@ Vertical variable statements follow roughly the same general format as inline va
   * Comments can appear in a vertical variable statement both after a line or on an individual line. _TODO: Is this true?_
 
 #### Matrices of different lengths in same vertical block:
-Matrices with different lengths can be stored in the same vertical block, but they must be saved in a specific order. The issue arrives because data elements do not need to be 'aligned' with their variable names, titles, descriptions, etc., instead the KV file just recognizes whitespace separating elements. This means the format can't recognize a 'gap' for the 2nd matrix if an element is present for the 3rd+ element because it would perceive the 3rd element as the 2nd. The result is the following rules:
+Matrices with different lengths can be stored in the same vertical block, but they must be saved in a specific order. The issue arrives because data elements do not need to be 'aligned' with their variable names, titles, descriptions, etc., instead the DDF file just recognizes whitespace separating elements. This means the format can't recognize a 'gap' for the 2nd matrix if an element is present for the 3rd+ element because it would perceive the 3rd element as the 2nd. The result is the following rules:
   * The matrices in a vertical block must be arranged from longest to shortest.
   * A matrix can't skip an element on one row and resume listing elements later. All elements must be on
   consecutive rows until all data have been listed.
@@ -211,5 +211,5 @@ Here's an example vertical block:
 	//Comments are still a-okay
 	2	 2.01 false  ""
 	3    5.87 true   "a = +6dB" //Comments after lines are also fine.
-	4    8.1  true   "" //Note the pretty column arrangement is only for the viewer's benefit. To KV readers, whitespace is whitespace
+	4    8.1  true   "" //Note the pretty column arrangement is only for the viewer's benefit. To DDF readers, whitespace is whitespace
 	#VERTICAL
