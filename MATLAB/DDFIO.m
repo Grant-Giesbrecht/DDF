@@ -194,7 +194,7 @@ classdef DDFIO < handle
 			obj.vars2D = [];
 			obj.error_messages = [];
 			obj.header = "";
-			obj.fileVersion = -1;			
+			obj.fileVersion = -1;
 		end %*************************** END clear() **********************
 
 		function hdr=getHeader(obj) %************* getHeader() ************
@@ -410,7 +410,6 @@ classdef DDFIO < handle
 
 				%Add description
 				if v.desc ~= "" && show_descriptions
-					disp(strcat(">", v.desc, "<", string(class(v.desc))));
 					out = strcat(out, " ?", v.desc);
 				end
 
@@ -441,7 +440,6 @@ classdef DDFIO < handle
 
 					%Add description
 					if v.desc ~= "" && show_descriptions
-						disp(strcat(">", v.desc, "<", string(class(v.desc))));
 						out = strcat(out, " ?", v.desc);
 					end
 
@@ -465,7 +463,6 @@ classdef DDFIO < handle
 
 					%Add description
 					if v.desc ~= "" && show_descriptions
-						disp(strcat(">", v.desc, "<", string(class(v.desc))));
 						out = strcat(out, " ?", v.desc);
 					end
 
