@@ -1,12 +1,23 @@
 function ddfload(varargin)
 
+	
+	local_dir = mfilename('fullpath'); % Get full path to this file
+	trim_idx = find(local_dir=='/', 1, 'last'); % Find index for trimming to directory
+	local_dir = local_dir(1:trim_idx-1);
+	
+	% ====================== NOTE TO USER =================================
 	% Settings file for ddfload must be saved here, or this string must be
-	% modified to reflect the accurate path if changed.
-	settings_file = "../Data/ddfload.conf";
+	% modified to reflect the accurate path if changed. This path is
+	% relative to the location of this file's ("ddfload.m")
+	% directory. If you want to specify an absoulte path, you can remove 
+	% the call to fullfile and instead specify the absolute path as a
+	% string.
+	%
+	settings_file = fullfile(local_dir, "../Data/ddfload.conf");
 
 	% Read config file
 	confs = loadConfig(settings_file, 'ShowMessages', false);
-	if islogical(class(confs))
+	if islogical(confs)
 		displ("ERROR: Failed to load configuration file '", settings_file, "'.");
 		return;
 	end
@@ -38,6 +49,16 @@ function ddfload(varargin)
 			
 			datafile_name = "favorites.ddf";
 			workspace_abbrev = "fav";
+			
+		elseif strcmp(shortcut, "-eng")
+			
+			datafile_name = "engineering.ddf";
+			workspace_abbrev = "eng";
+			
+		else 
+			
+			displ("ERROR: Flag '", shortcut, "' not recognized.");
+			return;
 			
 		end
 		
