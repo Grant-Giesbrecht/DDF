@@ -341,7 +341,6 @@ classdef DDFIO < handle
 		%	d: Decapitate - ie. omit header
 		%	-: Do not print version statement. WARNING: This will make the file unreadable.
 		%		Don't use it unless you know what you're doing.
-		%	;: Terminate variable statements with the optional semicolon
 		%	s: Sort vectors largest to smallest
 		%	u: Undocumented - variable descriptions are not printed
 		%
@@ -654,18 +653,10 @@ classdef DDFIO < handle
 							return;
 						end
 
-						allowSemi = true;
-
 						%Scan through optional features
 						for w=words(4:end)
 							cstr = char(w.str);
-							if w.str == ";"
-								if ~allowSemi
-									obj.logErrLn('Duplicate semicolons', lnum);
-									return
-								end
-								allowSemi = false;
-							elseif w.str == "?" || cstr(1) == '?'
+							if w.str == "?" || cstr(1) == '?'
 								temp.desc = strtrim(string(sline(w.idx+2:end))); %TODO: This will include inline comments. Go through document at beginning and purge all comments
 							elseif w.str == "//"
 								break; %Remainder is comment
@@ -689,20 +680,12 @@ classdef DDFIO < handle
 						end
 						valchar = char(val.str());
 						temp.val = string(valchar(2:end-1));
-
-						allowSemi = true;
 						
 						%Scan through optional features
 						remainingwords = parseIdx(sline(val.idx+1:end), [" ", char(9)]);
 						for w=remainingwords
 							cstr = char(w.str);
-							if w.str == ";"
-								if ~allowSemi
-									obj.logErrLn('Duplicate semicolons', lnum);
-									return
-								end
-								allowSemi = false;
-							elseif w.str == "?" || cstr(1) == '?'
+							if w.str == "?" || cstr(1) == '?'
 								temp.desc = strtrim(string(sline(val.idx+2+w.idx:end))); %TODO: This will include inline comments. Go through document at beginning and purge all comments
 							elseif w.str == "//"
 								break; %Remainder is comment
@@ -742,17 +725,10 @@ classdef DDFIO < handle
 						temp.updateCount();
 
 						%Scan through optional features
-						allowSemi = true;
 						remainingwords = parseIdx(sline(endIdx+1:end), [" ", char(9)]);
 						for w=remainingwords
 							cstr = char(w.str);
-							if w.str == ";"
-								if ~allowSemi
-									obj.logErrLn('Duplicate semicolons', lnum);
-									return
-								end
-								allowSemi = false;
-							elseif w.str == "?" || cstr(1) == '?'
+							if w.str == "?" || cstr(1) == '?'
 								temp.desc = strtrim(string(sline(endIdx+2+w.idx:end))); %TODO: This will include inline comments. Go through document at beginning and purge all comments
 							elseif w.str == "//"
 								break; %Remainder is comment
@@ -947,17 +923,10 @@ classdef DDFIO < handle
 						temp.updateCount();
 
 						%Scan through optional features
-						allowSemi = true;
 						remainingwords = parseIdx(sline(endIdx+1:end), [" ", char(9)]);
 						for w=remainingwords
 							cstr = char(w.str);
-							if w.str == ";"
-								if ~allowSemi
-									obj.logErrLn('Duplicate semicolons', lnum);
-									return
-								end
-								allowSemi = false;
-							elseif w.str == "?" || cstr(1) == '?'
+							if w.str == "?" || cstr(1) == '?'
 								temp.desc = sline(endIdx+1+w.idx:end); %TODO: This will include inline comments. Go through document at beginning and purge all comments
 							elseif w.str == "//"
 								break; %Remainder is comment
