@@ -321,6 +321,10 @@ classdef DDFIO < handle
 		
 		function write(obj, filename, options) %********* write() *********
 
+			if ~exist('options','var')
+				options = "";
+			end
+			
 			kstr = obj.swrite(options);
 
 			fid = fopen(filename,'wt');
@@ -344,9 +348,12 @@ classdef DDFIO < handle
 		% In the event of an error, it returns a blank string
 		function fstr=swrite(obj, options) %******* swrite() **************
 
+			if ~exist('options','var')
+				options = "";
+			end
+			
 			nl = string(newline);
 
-			out = "";
 			options = string(options);
 
 			%Initialize options
@@ -354,7 +361,6 @@ classdef DDFIO < handle
 			optimize = false;
 			decapitate = false;
 			skip_version = false;
-			term_char = '';
 			sort_mats = false;
 			show_descriptions = true;
 
@@ -370,9 +376,6 @@ classdef DDFIO < handle
 			end
 			if ~isempty(find(char(options)=='-',1))
 				skip_version = true;
-			end
-			if ~isempty(find(char(options)==';',1))
-				term_char = ';';
 			end
 			if ~isempty(find(char(options)=='s',1))
 				sort_mats = true;
@@ -406,7 +409,7 @@ classdef DDFIO < handle
 				end
 
 				%Create variable definition
-				out = strcat(out, v.getTypeStr(), " ", v.name, " ", valstr, term_char);
+				out = strcat(out, v.getTypeStr(), " ", v.name, " ", valstr);
 
 				%Add description
 				if v.desc ~= "" && show_descriptions
@@ -436,7 +439,7 @@ classdef DDFIO < handle
 					end
 
 					%Create variable definition
-					out = strcat(out, v.getTypeStr(), " ", v.name, " ", valstr, term_char);
+					out = strcat(out, v.getTypeStr(), " ", v.name, " ", valstr);
 
 					%Add description
 					if v.desc ~= "" && show_descriptions
@@ -459,7 +462,7 @@ classdef DDFIO < handle
 					end
 
 					%Create variable definition
-					out = strcat(out, v.getTypeStr(), " ", v.name, " ", valstr, term_char);
+					out = strcat(out, v.getTypeStr(), " ", v.name, " ", valstr);
 
 					%Add description
 					if v.desc ~= "" && show_descriptions
