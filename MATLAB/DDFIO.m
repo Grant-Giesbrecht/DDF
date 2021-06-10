@@ -654,9 +654,9 @@ classdef DDFIO < handle
 						end
 
 						%Scan through optional features
+						indesc = false;
 						for w=words(4:end)
 							cstr = char(w.str);
-							indesc = false;
 							if w.str == "?" || cstr(1) == '?'
 								indesc = true;
 								temp.desc = strtrim(string(sline(w.idx+2:end))); %TODO: This will include inline comments. Go through document at beginning and purge all comments
@@ -689,9 +689,9 @@ classdef DDFIO < handle
 						
 						%Scan through optional features
 						remainingwords = parseIdx(sline(val.idx+1:end), [" ", char(9)]);
+						indesc = false;
 						for w=remainingwords
 							cstr = char(w.str);
-							indesc = false;
 							if w.str == "?" || cstr(1) == '?'
 								indesc = true;
 								temp.desc = strtrim(string(sline(val.idx+2+w.idx:end))); %TODO: This will include inline comments. Go through document at beginning and purge all comments
@@ -737,9 +737,9 @@ classdef DDFIO < handle
 
 						%Scan through optional features
 						remainingwords = parseIdx(sline(endIdx+1:end), [" ", char(9)]);
+						indesc = false;
 						for w=remainingwords
 							cstr = char(w.str);
-							indesc = false;
 							if w.str == "?" || cstr(1) == '?'
 								indesc = true;
 								temp.desc = strtrim(string(sline(endIdx+2+w.idx:end))); %TODO: This will include inline comments. Go through document at beginning and purge all comments
@@ -940,9 +940,9 @@ classdef DDFIO < handle
 
 						%Scan through optional features
 						remainingwords = parseIdx(sline(endIdx+1:end), [" ", char(9)]);
+						indesc = false;
 						for w=remainingwords
 							cstr = char(w.str);
-							indesc = false;
 							if w.str == "?" || cstr(1) == '?'
 								indesc = true;
 								temp.desc = sline(endIdx+1+w.idx:end); %TODO: This will include inline comments. Go through document at beginning and purge all comments
