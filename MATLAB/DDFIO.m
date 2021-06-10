@@ -656,10 +656,15 @@ classdef DDFIO < handle
 						%Scan through optional features
 						for w=words(4:end)
 							cstr = char(w.str);
+							indesc = false;
 							if w.str == "?" || cstr(1) == '?'
+								indesc = true;
 								temp.desc = strtrim(string(sline(w.idx+2:end))); %TODO: This will include inline comments. Go through document at beginning and purge all comments
 							elseif w.str == "//"
 								break; %Remainder is comment
+							elseif ~indesc
+								obj.logErrLn(strcat("Superfluous character after variable declaration ('", w.str , "')"), lnum);
+								return;
 							end
 						end
 
@@ -677,6 +682,7 @@ classdef DDFIO < handle
 						val = getString(sline);
 						if isempty(val)
 							obj.logErrLn("Failed to find string value", lnum);
+							return;
 						end
 						valchar = char(val.str());
 						temp.val = string(valchar(2:end-1));
@@ -685,10 +691,15 @@ classdef DDFIO < handle
 						remainingwords = parseIdx(sline(val.idx+1:end), [" ", char(9)]);
 						for w=remainingwords
 							cstr = char(w.str);
+							indesc = false;
 							if w.str == "?" || cstr(1) == '?'
+								indesc = true;
 								temp.desc = strtrim(string(sline(val.idx+2+w.idx:end))); %TODO: This will include inline comments. Go through document at beginning and purge all comments
 							elseif w.str == "//"
 								break; %Remainder is comment
+							elseif ~indesc
+								obj.logErrLn(strcat("Superfluous character after variable declaration ('", w.str , "')"), lnum);
+								return;
 							end
 						end
 
@@ -728,10 +739,15 @@ classdef DDFIO < handle
 						remainingwords = parseIdx(sline(endIdx+1:end), [" ", char(9)]);
 						for w=remainingwords
 							cstr = char(w.str);
+							indesc = false;
 							if w.str == "?" || cstr(1) == '?'
+								indesc = true;
 								temp.desc = strtrim(string(sline(endIdx+2+w.idx:end))); %TODO: This will include inline comments. Go through document at beginning and purge all comments
 							elseif w.str == "//"
 								break; %Remainder is comment
+							elseif ~indesc
+								obj.logErrLn(strcat("Superfluous character after variable declaration ('", w.str , "')"), lnum);
+								return;
 							end
 						end
 
@@ -926,10 +942,15 @@ classdef DDFIO < handle
 						remainingwords = parseIdx(sline(endIdx+1:end), [" ", char(9)]);
 						for w=remainingwords
 							cstr = char(w.str);
+							indesc = false;
 							if w.str == "?" || cstr(1) == '?'
+								indesc = true;
 								temp.desc = sline(endIdx+1+w.idx:end); %TODO: This will include inline comments. Go through document at beginning and purge all comments
 							elseif w.str == "//"
 								break; %Remainder is comment
+							elseif ~indesc
+								obj.logErrLn(strcat("Superfluous character after variable declaration ('", w.str , "')"), lnum);
+								return;
 							end
 						end
 

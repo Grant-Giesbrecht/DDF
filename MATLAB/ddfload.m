@@ -54,8 +54,6 @@ function ddfload(varargin)
 		return;
 	end
 	
-	
-	
 	% Get data path from configuration file
 	if ispc
 		
