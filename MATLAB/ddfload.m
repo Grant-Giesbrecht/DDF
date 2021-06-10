@@ -18,10 +18,23 @@ function ddfload(varargin)
 %	      -fav	Load "favorites.ddf". This file is user customizable to include
 %				the user's most used variables.
 %
-%	See also DDFIO.
+%	Notes on paths and configuration file location: DDFLOAD reads a
+%	configuration file, whose location is hardcoded relative to this
+%	function's file's location. This version of DDFLOAD will read only two
+%	keys from the configuration file, 'datapath' for Mac and Linux systems,
+%	and 'datapath_pc' for Windows systems. Both keys can be present. For
+%	details on configuration file format, see help for LOADCONFIG.
+%
+%	See also DDFIO, LOADCONFIG.
 	
 	file_path = mfilename('fullpath'); % Get full path to this file
-	trim_idx = find(file_path=='/', 1, 'last'); % Find index for trimming to directory
+	if ismac || isunix
+		trim_idx = find(file_path=='/', 1, 'last'); % Find index for trimming to directory
+	elseif ispc % Handle Windows' weird directory system
+		trim_idx = find(file_path=='\', 1, 'last'); % Find index for trimming to directory
+	else % Else treat same as mac. Different statement in case new logic to be added
+		trim_idx = find(file_path=='/', 1, 'last'); % Find index for trimming to directory
+	end
 	local_dir = file_path(1:trim_idx-1);
 	
 	% ====================== NOTE TO USER =================================
@@ -32,7 +45,7 @@ function ddfload(varargin)
 	% the call to fullfile and instead specify the absolute path as a
 	% string.
 	%
-	settings_file = fullfile(local_dir, "../ddfload_Data/ddfload.conf");
+	settings_file = fullfile(local_dir, "..", "ddfload_Data", "ddfload.conf");
 
 	% Read config file
 	confs = loadConfig(settings_file, 'ShowMessages', false);
@@ -41,11 +54,36 @@ function ddfload(varargin)
 		return;
 	end
 	
-	%Check that required key(s) exist
-	if ~mapContains(confs, 'datapath')
-		displ("ERROR: Configuration file '", settings_file, "' does not contain key 'datapath'.");
-		return;
+	
+	
+	% Get data path from configuration file
+	if ispc
+		
+		%Check that required key(s) exist
+		if ~mapContains(confs, 'datapath')
+			displ("ERROR: Configuration file '", settings_file, "' does not contain key 'datapath_pc'.");
+			return;
+		end
+		
+		% Get data path from configuration file
+		fmt_datapath = confs('datapath_pc');
+		
+		% Replace home directory if specified with '~'
+		if fmt_datapath(1) == '~'
+			fmt_datapath = strcat(gethomedir, fmt_datapath(2:end));
+		end
+	else
+		
+		%Check that required key(s) exist
+		if ~mapContains(confs, 'datapath')
+			displ("ERROR: Configuration file '", settings_file, "' does not contain key 'datapath'.");
+			return;
+		end
+		
+		% Get data path from configuration file
+		fmt_datapath = confs('datapath');
 	end
+	
 	
 	%Load data
 	for shortcut=varargin
@@ -83,7 +121,7 @@ function ddfload(varargin)
 			
 			%Display paths
 			displ("    Configuration File Path: '", settings_file, "'");
-			displ("    Data Directory: '", confs('datapath') , "'");
+			displ("    Data Directory: '", fmt_datapath , "'");
 			displ("    Path to this function: '", file_path, ".m'");
 		
 		elseif csc(1) ~= '-' % Interpret as DDF filename
@@ -100,7 +138,7 @@ function ddfload(varargin)
 			end
 			
 			% Check that file exists
-			if ~isfile(fullfile(confs('datapath'), shortcut))
+			if ~isfile(fullfile(fmt_datapath, shortcut))
 				displ("ERROR: Failed to find file '", shortcut, "'.");
 				continue;
 			end
@@ -122,7 +160,7 @@ function ddfload(varargin)
 		if ~skip_save
 			
 			%Get path to data directory
-			filepath = fullfile(confs('datapath'), datafile_name);
+			filepath = fullfile(fmt_datapath, datafile_name);
 
 			%Read data file
 			ddf = DDFIO(filepath);
