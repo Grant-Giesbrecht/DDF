@@ -15,6 +15,8 @@ class DFFIO:
 		self.fileVersion = -1;
 		self.error_messages = [];
 
+		#TODO: Open file if specified
+
 	#*********************** ADD VARIABLES ***********************************#
 
 	def add(self, newVar, varName:str, desc:str=""):
@@ -127,15 +129,18 @@ class DFFIO:
 	#************************ OTHER ******************************************#
 
 	def isValidName(self, name:str):
+
+		# Name is at least 1 character
 		if len(name) < 1:
 			return False
 
-		if not name.isalpha():
-			return False
+		# First char is letter
+		if not name[0].isalpha():
+			return False;
 
-		for c in name:
-			if c.isspace():
-				return False
+		# All characters are alphanumeric
+		if not name.isalnum():
+			return False
 
 		return True
 
