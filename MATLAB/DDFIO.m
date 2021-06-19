@@ -130,6 +130,7 @@ classdef DDFIO < handle
 				end
 			end
 
+			%TODO: Return empty instead?
 			nki = DDFItem(-1, "NOTFOUND", "");
 			nki.isnotfound = true;
 			di=nki;
@@ -216,19 +217,20 @@ classdef DDFIO < handle
 				return;
 			end
 
+			%For each character
+			if ~all(isstrprop(name, "alphanum"))
+				valid = false;
+				return;
+			end
+
 			%Check that first character is letter
 			if ~isletter(name(1))
 				valid=false;
 				return;
 			end
 
-			%For each character
-			for c=name
-				if isspace(c)
-					valid=false;
-					return;
-				end
-			end
+
+
 
 			valid=true;
 			return;
