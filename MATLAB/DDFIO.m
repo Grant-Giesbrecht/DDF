@@ -1,7 +1,7 @@
 classdef DDFIO < handle
 % DDFIO Read and write DDF files.
-%	Reads and writes the DDF data file format. 
-%	
+%	Reads and writes the DDF data file format.
+%
 % DDFIO Properties:
 %	varsFlat - Matrix of DDFItems representing non-matrix variables
 %	vars1D - Matrix of DDFItems representing 1D matrix variables
@@ -32,7 +32,7 @@ classdef DDFIO < handle
 		header
 		fileVersion
 	end   %********************** END PROPERTIES **************************
-	
+
 	properties (Access=private) %************ PRIVATE PROPERTIES **********
 		error_messages
 		current_version
@@ -40,7 +40,7 @@ classdef DDFIO < handle
 	end  %********************* END PRIVATE PROPERTIES ********************
 
 	methods   %************************ METHODS ***************************
-		
+
 		function obj=DDFIO(varargin)	%*************** INITIALIZER **************
 			obj.varsFlat = [];
 			obj.vars1D = [];
@@ -48,9 +48,9 @@ classdef DDFIO < handle
 			obj.header = "";
 			obj.fileVersion = -1;
 			obj.error_messages = [];
-			obj.current_version = 2;
+			obj.current_version = 1;
 			obj.current_version_str = "1.0";
-			
+
 			if nargin > 0
 				if class(varargin{1}) == "string"
 					obj.loadDDF_V1(varargin{1});
@@ -96,7 +96,7 @@ classdef DDFIO < handle
 		end %*********************************** END add() ****************
 
 		function assignAll(obj) %**************** assignAll() *************
-			
+
 			for ddfi=obj.varsFlat
 				assignin('base', ddfi.name, ddfi.val);
 			end
@@ -106,9 +106,9 @@ classdef DDFIO < handle
 			for ddfi=obj.vars2D
 				assignin('base', ddfi.name, ddfi.val);
 			end
-			
+
 		end %******************* END assignAll() **************************
-		
+
 		function di=get(obj, name) %************* get() *******************
 
 			for ddfi=obj.varsFlat
@@ -248,18 +248,18 @@ classdef DDFIO < handle
 		end %********************** END sortMatrices() ********************
 
 		function show(obj) %*************** show() ************************
-			
+
 			disp(strcat("No. Variables: ", num2str(obj.numVar)));
 			nameCap = 10;
 			typeCap = 10;
 			valCap = 20;
 			descCap = 20;
-			
+
 			names = strings([length(obj.varsFlat), 1]);
 			types = strings([length(obj.varsFlat), 1]);
 			vals = strings([length(obj.varsFlat), 1]);
 			descs = strings([length(obj.varsFlat), 1]);
-			
+
 			i = 0;
 			for v=obj.varsFlat
 				i = i + 1;
@@ -269,19 +269,19 @@ classdef DDFIO < handle
 				descs(i) = limitLength(string(v.desc), descCap);
 			end
 			TF = table(names, types, vals, descs);
-			
+
 			disp("-----------------------------------------------------------------------");
 			disp("| Flat Variables                                                      |");
 			disp("-----------------------------------------------------------------------");
 			disp(TF);
 			disp(" ");
 			disp(" ")
-			
+
 			names = strings([length(obj.vars1D), 1]);
 			types = strings([length(obj.vars1D), 1]);
 			vals = strings([length(obj.vars1D), 1]);
 			descs = strings([length(obj.vars1D), 1]);
-			
+
 			i = 0;
 			for v=obj.vars1D
 				i = i + 1;
@@ -297,12 +297,12 @@ classdef DDFIO < handle
 			disp(T1D);
 			disp(" ");
 			disp(" ")
-			
+
 			names = strings([length(obj.vars2D), 1]);
 			types = strings([length(obj.vars2D), 1]);
 			vals = strings([length(obj.vars2D), 1]);
 			descs = strings([length(obj.vars2D), 1]);
-			
+
 			i = 0;
 			for v=obj.vars2D
 				i = i + 1;
@@ -316,15 +316,15 @@ classdef DDFIO < handle
 			disp("| 2D Variables                                                        |");
 			disp("-----------------------------------------------------------------------");
 			disp(T2D);
-			
+
 		end %*************************** END show() ***********************
-		
+
 		function write(obj, filename, options) %********* write() *********
 
 			if ~exist('options','var')
 				options = "";
 			end
-			
+
 			kstr = obj.swrite(options);
 
 			fid = fopen(filename,'wt');
@@ -350,7 +350,7 @@ classdef DDFIO < handle
 			if ~exist('options','var')
 				options = "";
 			end
-			
+
 			nl = string(newline);
 
 			options = string(options);
@@ -483,23 +483,23 @@ classdef DDFIO < handle
 		end %*********************** END swrite() *************************
 
 		function load(obj, filename) %********************* load() *********************
-			
+
 			obj.readVersion(filename);
-			
+
 			if obj.fileVersion == -1
 				obj.logErr(strcat("Failed to load file '", filename ,"'. Unable to determine file version."))
 				return;
 			end
-			
+
 			if obj.fileVersion == 2
 				obj.loadDDF_V1(filename)
-				
+
 			end
-			
+
 		end %**************************** END load() **********************
-		
+
 		function readVersion(obj, fileIn) %********************** readVersion() ******
-			
+
 			lnum = 0;
 			foundHeader = 0;
 
@@ -515,7 +515,7 @@ classdef DDFIO < handle
 
                 sline = fgetl(fid); %Read line
                 lnum = lnum+1; %Increment Line Number
-				
+
 				%Remove comments
 				sline = trimtok(sline, '//');
 
@@ -544,13 +544,13 @@ classdef DDFIO < handle
 						obj.fileVersion = -1;
 						obj.logErrLn(strcat("Failed to convert version number '",words(2).str , "' to string"), lnum);
 					end
-					
+
 					break;
 				end
 			end
-			
+
 		end %************************************ END readVersion() *******
-		
+
         function loadDDF_V1(obj, fileIn) %***** loadDDF_V1() *****
 
             lnum = 0;
@@ -568,7 +568,7 @@ classdef DDFIO < handle
 
                 sline = fgetl(fid); %Read line
                 lnum = lnum+1; %Increment Line Number
-				
+
 				%Remove comments
 				sline = trimtok(sline, '//');
 
@@ -686,7 +686,7 @@ classdef DDFIO < handle
 						end
 						valchar = char(val.str());
 						temp.val = string(valchar(2:end-1));
-						
+
 						%Scan through optional features
 						remainingwords = parseIdx(sline(val.idx+1:end), [" ", char(9)]);
 						indesc = false;
@@ -927,7 +927,7 @@ classdef DDFIO < handle
 						if ~isempty(descs)
 							temp.desc = strtrim(descs(di).str);
 						end
-						
+
 						%Get matrix contents
 						data_strs(di) = strcat("[", data_strs(di), "]");
 						[newmat, endIdx] = getMatrix(data_strs(di), typestr); %TODO: Cannot handle strings in matrix with commas in the strings. Semicolons too.
