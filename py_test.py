@@ -1,22 +1,22 @@
-from Python.pykv import *
+from Python.pyddf import *
 
-kv = KVFile();
-kv.add(3.14159, "pi")
-kv.add(12.05, "Vin", "Input Voltage (V)")
-kv.add([12.05, 12.03, 11.97], "Vin_t", "Vin logged (V)")
-if not kv.add(None, "This_fails"):
-	print(kv.err())
-if not kv.add([[[1]]], "This_also_fails"):
-	print(kv.err())
-if not kv.add([1], "pi"):
-	print(kv.err())
-print(kv("pi"))
-print(kv("Vin"))
-print(kv("Vin_t"))
-kv.clear()
-if not kv.readKV1_V2("./examples/read_test.kv"):
-	print(kv.err())
+ddf = DDFIO();
+ddf.add(3.14159, "pi")
+ddf.add(12.05, "Vin", "Input Voltage (V)")
+ddf.add([12.05, 12.03, 11.97], "Vin_t", "Vin logged (V)")
+if not ddf.add(None, "This_fails"):
+	print(ddf.err())
+if not ddf.add([[[1]]], "This_also_fails"):
+	print(ddf.err())
+if not ddf.add([1], "pi"):
+	print(ddf.err())
+print(ddf("pi"))
+print(ddf("Vin"))
+print(ddf("Vin_t"))
+ddf.clear()
+if not ddf.loadDDF_V1("./examples/read_test.ddf"):
+	print(ddf.err())
 print("\n")
-print(f"Version: {kv.getVersion()}")
-print(f"\"{kv.getHeader()}\"")
-kv.show()
+print(f"Version: {ddf.getVersion()}")
+print(f"\"{ddf.getHeader()}\"")
+ddf.show()
