@@ -13,13 +13,13 @@ def parseTwoIdx(input:str, delims:str):
 			yield (p, q) # or p, q-1 if you are really sure you want that
 		p = q
 
-def parseIdxBreak(input:str, delims:str=" ", keep_delims:str=""):
+def parseIdx(input:str, delims:str=" ", keep_delims:str=""):
 
 	out = []
 
 	sections = list(parseTwoIdx(input, delims))
 	for s in sections:
-		out.append(StringIdx(input[s[0]:s[1]], s[0]))
+		out.append(StringIdx(input[s[0]:s[1]], s[0], s[1]))
 	return out
 
 def parseIdxKeep(input:str, delims:str=" ", keep_delims:str=""):
@@ -36,6 +36,6 @@ def parseIdxKeep(input:str, delims:str=" ", keep_delims:str=""):
 
 	return out
 
-def parseIdx(input:str, delims:str=" ", keep_delims:str=""):
-
-	for in
+# def parseIdx(input:str, delims:str=" ", keep_delims:str=""):
+#
+# 	for in
