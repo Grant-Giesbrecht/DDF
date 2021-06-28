@@ -9,9 +9,10 @@ M1D = 1
 M2D = 2
 
 class StringIdx():
-	def __init__(self, val:str, idx:int):
+	def __init__(self, val:str, idx:int, idx_end:int=-1):
 		self.str = val
 		self.idx = idx
+		self.idx_end = idx_end;
 
 	def __str__(self):
 		return f"[{self.idx}]\"{self.str}\""
