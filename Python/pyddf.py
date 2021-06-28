@@ -1,6 +1,6 @@
-from .dff_types import *
+from .ddf_types import *
 from .helpers import *
-class DFFIO:
+class DDFIO:
 
 	#***************** INITIALIZERS *******************************************#
 
@@ -227,42 +227,68 @@ class DFFIO:
 					continue
 				elif words[0].str == 'd' or words[0].str == 's' or words[0].str == 'b' or words[0].str == 'm<d>' or words[0].str == 'm<s>' or words[0].str == 'm<b>':
 
+					# Verify at least 3 words are present
 					if len(words) < 3:
 						self.logErr(f"Failed on line {lnum}. Insufficient number of tokens for inline variable statement.")
-						return false;
+						return False;
 
+					# Check that the name is valid
 					if (not self.isValidName(words[1].str)):
 						badname = words[1].str
 						self.logErr(f"Failed on line {lnum}. Invalid variable name '{badname}'.")
+						return False;
 
-					#Read value
+					# Read value
 					optional_features_start = 3
-					if words[0].str == 'd':
+					if words[0].str == 'd' or words[0] == 'b':
 
-						try:
-							val = float(words[2].str)
-						except:
-							badval = words[2].str
-							self.logErr(f"Failed on line {lnum}. Failed to convert value '{badval}' to float.")
-							return False
-						optional_features_start = 3;
+						if words[0].str == 'd':
+							try:
+								val = float(words[2].str)
+							except:
+								badval = words[2].str
+								self.logErr(f"Failed on line {lnum}. Failed to convert value '{badval}' to float.")
+								return False
+						else:
+							if words[2].str.upper() == "TRUE":
+								val = True;
+							elif words[2].str.upper() == "FALSE":
+								val = False;
+							else:
+								w2 = words[2].str;
+								self.logErr(f"Failed on line {lnum}. Unrecognized boolian value '{w2}'.");
+								return False
 
 						temp = DFFItem(val, words[1].str)
+
+						optional_features_start = 3;
+
+
 
 						#Read optional arguments/features
 						allow_semi = True
 						in_desc = False
+						desc_start = -1;
+						desc_end = -1;
 						for wd in words[optional_features_start:]:
 
-							if wd.str == ';':
-								if not allow_semi:
-									self.logErr(f"Failed on line {lnum}. Detected excessive semicolons.")
-									return False
-								allow_semi = False
-							elif (wd.str == '?' or (len(wd.str) > 0 and wd.str[0] == '?')):
+							if (wd.str == '?' or (len(wd.str) > 0 and wd.str[0] == '?')):
 								in_desc = True
+								desc_start = wd.idx_end+1;
+
 								temp.desc = line[wd.idx-len(wd.str)-2]
 							elif wd.str == '//':
+								desc_end = wd.idx-1;
 								break #Rest is a comment
+							elif not in_desc:
+								self.logErr(f"Failed on line {lnum}. Superfluous character after variable declaration ({wd.str}).");
+								return False
+
+						# Get description
+						if desc_start >= 0:
+							if desc_end == -1:
+								temp.desc = line[desc_start:]
+							else:
+								temp.desc = line[desc_start:desc_end]
 
 					self.vars1D.append(temp)
