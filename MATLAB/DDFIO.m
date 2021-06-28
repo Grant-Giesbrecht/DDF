@@ -25,6 +25,9 @@ classdef DDFIO < handle
 %	swrite - Write the contents of the DDFIO object to a DDF formatted string
 %	loadDDF_V1 - Read a version 1 DDF file
 %
+
+% TODO: Prevent names with spaces from being allowed
+
 	properties   %************************ PROPERTIES *********************
 		varsFlat
 		vars1D
@@ -72,19 +75,19 @@ classdef DDFIO < handle
 			%Find correct group to add to
 			if newItem.dimension == 1
 				if length(obj.varsFlat) == 0
-					obj.varsFlat = newItem
+					obj.varsFlat = newItem;
 				else
 					obj.varsFlat(end+1) = newItem;
 				end
 			elseif newItem.dimension == 2
 				if length(obj.vars1D) == 0
-					obj.vars1D = newItem
+					obj.vars1D = newItem;
 				else
 					obj.vars1D(end+1) = newItem;
 				end
 			elseif newItem.dimension == 3
 				if length(obj.vars2D) == 0
-					obj.vars2D = newItem
+					obj.vars2D = newItem;
 				else
 					obj.vars2D(end+1) = newItem;
 				end
@@ -249,7 +252,145 @@ classdef DDFIO < handle
 
 		end %********************** END sortMatrices() ********************
 
-		function show(obj) %*************** show() ************************
+		function show(obj, varargin)
+
+			out = "";
+
+			out = strcat("No. Variables", num2str(obj.numVar), string(newline));
+			out = strcat(out, string(newline), "Flat Variables:", string(newline));
+
+			trim_len = 45;
+
+			i = 0;
+			flatTable = MTable();
+			flatTable.row(["Name", "Type", "Value", "Description"]);
+			for v=obj.varsFlat
+				i = i + 1;
+
+				flatTable.row([string(v.name), string(v.type), v.getValueStr(), string(v.desc)]);
+				% flatTable.row([limitLength(v.name, nameCap), limitLength(v.type, typeCap), limitLength(v.getValueStr(), valCap), limitLength(string(v.desc), descCap)]);
+
+			end
+			flatTable.alignt('l');
+			flatTable.alignah('l');
+			flatTable.alignac('l');
+			flatTable.trimac('c', trim_len);
+			out = strcat(out, flatTable.str());
+
+
+
+			out = strcat(out, string(newline), "1D Variables:", string(newline));
+			i = 0;
+			matTable1 = MTable();
+			matTable1.row(["Name", "Type", "Value", "Description"]);
+			for v=obj.vars1D
+				i = i + 1;
+
+				matTable1.row([string(v.name), string(v.type), v.getValueStr(), string(v.desc)]);
+				% flatTable.row([limitLength(v.name, nameCap), limitLength(v.type, typeCap), limitLength(v.getValueStr(), valCap), limitLength(string(v.desc), descCap)]);
+
+			end
+			matTable1.alignt('l');
+			matTable1.alignah('l');
+			matTable1.alignac('l');
+			matTable1.trimac('c', trim_len);
+			out = strcat(out, matTable1.str());
+
+
+			out = strcat(out, string(newline), "2D Variables:", string(newline));
+			i = 0;
+			matTable2 = MTable();
+			matTable2.row(["Name", "Type", "Value", "Description"]);
+			for v=obj.vars2D
+				i = i + 1;
+
+				matTable2.row([string(v.name), string(v.type), v.getValueStr(), string(v.desc)]);
+				% flatTable.row([limitLength(v.name, nameCap), limitLength(v.type, typeCap), limitLength(v.getValueStr(), valCap), limitLength(string(v.desc), descCap)]);
+
+			end
+			matTable2.alignt('l');
+			matTable2.alignah('l');
+			matTable2.alignac('l');
+			matTable2.trimac('c', trim_len);
+			out = strcat(out, matTable2.str());
+
+			disp(out);
+
+		end
+
+		function showMTable(obj)
+
+			disp(strcat("No. Variables: ", num2str(obj.numVar)));
+			nameCap = 10;
+			typeCap = 10;
+			valCap = 20;
+			descCap = 20;
+
+			names = strings([length(obj.varsFlat), 1]);
+			types = strings([length(obj.varsFlat), 1]);
+			vals = strings([length(obj.varsFlat), 1]);
+			descs = strings([length(obj.varsFlat), 1]);
+
+			i = 0;
+			for v=obj.varsFlat
+				i = i + 1;
+				names(i) = limitLength(v.name, nameCap);
+				types(i) = limitLength(v.type, typeCap);
+				vals(i) = limitLength(v.getValueStr(), valCap);
+				descs(i) = limitLength(string(v.desc), descCap);
+			end
+			TF = table(names, types, vals, descs);
+
+			disp("-----------------------------------------------------------------------");
+			disp("| Flat Variables                                                      |");
+			disp("-----------------------------------------------------------------------");
+			disp(TF);
+			disp(" ");
+			disp(" ")
+
+			names = strings([length(obj.vars1D), 1]);
+			types = strings([length(obj.vars1D), 1]);
+			vals = strings([length(obj.vars1D), 1]);
+			descs = strings([length(obj.vars1D), 1]);
+
+			i = 0;
+			for v=obj.vars1D
+				i = i + 1;
+				names(i) = limitLength(v.name, nameCap);
+				types(i) = limitLength(v.type, typeCap);
+				vals(i) = limitLength(v.getValueStr(), valCap);
+				descs(i) = limitLength(string(v.desc), descCap);
+			end
+			T1D = table(names, types, vals, descs);
+			disp("-----------------------------------------------------------------------");
+			disp("| 1D Variables                                                        |");
+			disp("-----------------------------------------------------------------------");
+			disp(T1D);
+			disp(" ");
+			disp(" ")
+
+			names = strings([length(obj.vars2D), 1]);
+			types = strings([length(obj.vars2D), 1]);
+			vals = strings([length(obj.vars2D), 1]);
+			descs = strings([length(obj.vars2D), 1]);
+
+			i = 0;
+			for v=obj.vars2D
+				i = i + 1;
+				names(i) = limitLength(v.name, nameCap);
+				types(i) = limitLength(v.type, typeCap);
+				vals(i) = limitLength(v.getValueStr(), valCap);
+				descs(i) = limitLength(string(v.desc), descCap);
+			end
+			T2D = table(names, types, vals, descs);
+			disp("-----------------------------------------------------------------------");
+			disp("| 2D Variables                                                        |");
+			disp("-----------------------------------------------------------------------");
+			disp(T2D);
+
+		end
+
+		function showOldTable(obj) %*************** show() ************************
 
 			disp(strcat("No. Variables: ", num2str(obj.numVar)));
 			nameCap = 10;
