@@ -6,6 +6,7 @@ classdef DDFItem < handle
 		name
 		desc
 		count
+		unit
 		isnotfound %When is a returned value that does not exist, is set true, else false
 	end		 % ************* END PROPERTIES *****************
 	
@@ -19,6 +20,7 @@ classdef DDFItem < handle
 			obj.desc = string(desc);
 			obj.count = numel(obj.val);
 			obj.isnotfound = false;
+			obj.unit = "";
 			if isa(value,'double')
 				obj.type = "d";
 			elseif isa(value,'string')
