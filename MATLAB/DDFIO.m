@@ -256,64 +256,71 @@ classdef DDFIO < handle
 
 			out = "";
 
-			out = strcat("No. Variables", num2str(obj.numVar), string(newline));
-			out = strcat(out, string(newline), "Flat Variables:", string(newline));
+			out = strcat("No. Variables: ", num2str(obj.numVar), string(newline));
+			
 
 			trim_len = 45;
 
-			i = 0;
-			flatTable = MTable();
-			flatTable.row(["Name", "Type", "Value", "Description"]);
-			for v=obj.varsFlat
-				i = i + 1;
+			if numel(obj.varsFlat) > 0
+				
+				out = strcat(out, string(newline), "Flat Variables:", string(newline));
 
-				flatTable.row([string(v.name), string(v.type), v.getValueStr(), string(v.desc)]);
-				% flatTable.row([limitLength(v.name, nameCap), limitLength(v.type, typeCap), limitLength(v.getValueStr(), valCap), limitLength(string(v.desc), descCap)]);
+				i = 0;
+				flatTable = MTable();
+				flatTable.row(["Name", "Type", "Value", "Description"]);
+				for v=obj.varsFlat
+					i = i + 1;
 
+					flatTable.row([string(v.name), string(v.type), v.getValueStr(), string(v.desc)]);
+					% flatTable.row([limitLength(v.name, nameCap), limitLength(v.type, typeCap), limitLength(v.getValueStr(), valCap), limitLength(string(v.desc), descCap)]);
+
+				end
+				flatTable.alignt('l');
+				flatTable.alignah('l');
+				flatTable.alignac('l');
+				flatTable.trimac('c', trim_len);
+				out = strcat(out, flatTable.str());
 			end
-			flatTable.alignt('l');
-			flatTable.alignah('l');
-			flatTable.alignac('l');
-			flatTable.trimac('c', trim_len);
-			out = strcat(out, flatTable.str());
 
+	
+			if numel(obj.vars1D) > 0
+				out = strcat(out, string(newline), "1D Variables:", string(newline));
+				i = 0;
+				matTable1 = MTable();
+				matTable1.row(["Name", "Type", "Value", "Description"]);
+				for v=obj.vars1D
+					i = i + 1;
 
+					matTable1.row([string(v.name), string(v.type), v.getValueStr(), string(v.desc)]);
+					% flatTable.row([limitLength(v.name, nameCap), limitLength(v.type, typeCap), limitLength(v.getValueStr(), valCap), limitLength(string(v.desc), descCap)]);
 
-			out = strcat(out, string(newline), "1D Variables:", string(newline));
-			i = 0;
-			matTable1 = MTable();
-			matTable1.row(["Name", "Type", "Value", "Description"]);
-			for v=obj.vars1D
-				i = i + 1;
-
-				matTable1.row([string(v.name), string(v.type), v.getValueStr(), string(v.desc)]);
-				% flatTable.row([limitLength(v.name, nameCap), limitLength(v.type, typeCap), limitLength(v.getValueStr(), valCap), limitLength(string(v.desc), descCap)]);
-
+				end
+				matTable1.alignt('l');
+				matTable1.alignah('l');
+				matTable1.alignac('l');
+				matTable1.trimac('c', trim_len);
+				out = strcat(out, matTable1.str());
 			end
-			matTable1.alignt('l');
-			matTable1.alignah('l');
-			matTable1.alignac('l');
-			matTable1.trimac('c', trim_len);
-			out = strcat(out, matTable1.str());
 
+			if numel(obj.vars2D) > 0
+				out = strcat(out, string(newline), "2D Variables:", string(newline));
+				i = 0;
+				matTable2 = MTable();
+				matTable2.row(["Name", "Type", "Value", "Description"]);
+				for v=obj.vars2D
+					i = i + 1;
 
-			out = strcat(out, string(newline), "2D Variables:", string(newline));
-			i = 0;
-			matTable2 = MTable();
-			matTable2.row(["Name", "Type", "Value", "Description"]);
-			for v=obj.vars2D
-				i = i + 1;
+					matTable2.row([string(v.name), string(v.type), v.getValueStr(), string(v.desc)]);
+					% flatTable.row([limitLength(v.name, nameCap), limitLength(v.type, typeCap), limitLength(v.getValueStr(), valCap), limitLength(string(v.desc), descCap)]);
 
-				matTable2.row([string(v.name), string(v.type), v.getValueStr(), string(v.desc)]);
-				% flatTable.row([limitLength(v.name, nameCap), limitLength(v.type, typeCap), limitLength(v.getValueStr(), valCap), limitLength(string(v.desc), descCap)]);
-
+				end
+				matTable2.alignt('l');
+				matTable2.alignah('l');
+				matTable2.alignac('l');
+				matTable2.trimac('c', trim_len);
+				out = strcat(out, matTable2.str());
 			end
-			matTable2.alignt('l');
-			matTable2.alignah('l');
-			matTable2.alignac('l');
-			matTable2.trimac('c', trim_len);
-			out = strcat(out, matTable2.str());
-
+			
 			disp(out);
 
 		end
