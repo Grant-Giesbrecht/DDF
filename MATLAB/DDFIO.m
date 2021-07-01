@@ -221,7 +221,7 @@ classdef DDFIO < handle
 			end
 
 			%For each character
-			if ~all(isstrprop(name, "alphanum"))
+			if ~all(isstrprop(name, "alphanum") | name == '_')
 				valid = false;
 				return;
 			end
