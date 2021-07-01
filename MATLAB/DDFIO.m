@@ -634,7 +634,7 @@ classdef DDFIO < handle
 				return;
 			end
 
-			if obj.fileVersion == 2
+			if obj.fileVersion == 1
 				obj.loadDDF_V1(filename)
 
 			end
@@ -779,7 +779,7 @@ classdef DDFIO < handle
 
 					%Check that name is valid
 					if ~obj.isValidName(words(2).str)
-						obj.logErrLn(strcat('Invalid variable name "', words(2).str, '"'));
+						obj.logErrLn(strcat('Invalid variable name "', words(2).str, '"'), lnum);
 						return;
 					end
 
