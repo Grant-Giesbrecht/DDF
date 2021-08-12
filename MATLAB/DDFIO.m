@@ -538,6 +538,10 @@ classdef DDFIO < handle
 			if ~optimize
 				out = strcat(out, nl);
 			end
+			
+			if skip_version
+				out = "";
+			end
 
 			%Write header statement
 			if ~decapitate && obj.header ~= ""
@@ -626,7 +630,7 @@ classdef DDFIO < handle
 
 
 			else %------------------ END horiz, start vert. mode matrix ---
-				out = out;
+				out = out; %TODO: Print veritcal matrix!
 			end %--------------------- END matrix print
 
 			fstr = out;
