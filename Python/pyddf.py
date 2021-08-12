@@ -1,5 +1,5 @@
-from .ddf_types import *
-from .helpers import *
+from ddf_types import *
+from helpers import *
 class DDFIO:
 
 	#***************** INITIALIZERS *******************************************#
@@ -15,6 +15,8 @@ class DDFIO:
 		self.fileVersion = -1;
 		self.error_messages = [];
 
+		self.current_version_str = "1.0"
+
 		#TODO: Open file if specified
 
 	#*********************** ADD VARIABLES ***********************************#
@@ -22,7 +24,7 @@ class DDFIO:
 	def add(self, newVar, varName:str, desc:str=""):
 		""" Add a variable to the object  """
 
-		newItem = DFFItem(newVar, varName, desc)
+		newItem = DDFItem(newVar, varName, desc)
 
 		#Check for errors
 		if newItem.type == ERR:
@@ -101,6 +103,118 @@ class DDFIO:
 
 		for v in self.vars1D:
 			print(v)
+
+	#*********************** WRITE FILE ***************************************#
+
+	def write(self, filename:str, options:str=""):
+		self.save(filename, options)
+
+	def save(self, filename:str, options:str=""):
+
+		dstr = self.swrite(options);
+
+		try:
+			with open(filename, "w") as fid:
+				fid.write(dstr);
+		except IOError as e:
+			print(f"Failed to open file '{filename}. ({str(e)})'")
+
+	def swrite(self, options:str=""):
+
+		# Initialize options
+		vertical_mode = False
+		optimize = False
+		decapitate = False
+		skip_version = False
+		sort_mats = False
+		show_descriptions = True
+
+		# Read options
+		if "v" in options:
+			vertical_mode = True
+		if "o" in options:
+			optimize = True
+		if "d" in options:
+			decapitate = True
+		if "-" in options:
+			skip_version = True
+		if "s" in options:
+			sort_mats = True
+		if "u" in options:
+			show_descriptions = False
+
+		# Write version statement
+		out = ""
+		if not skip_version:
+			out = "#VERSION " + self.current_version_str + "\n";
+
+			if not optimize:
+				out = out + "\n";
+
+		# Write header statement
+		if not decapitate and len(self.header) > 0:
+			out = out + "#HEADER\n" + self.header + "\n#HEADER\n"
+
+			if not optimize:
+				out = out + "\n"
+
+		# Write flat variables
+
+		for v in self.varsFlat:
+
+			# Get string for value
+			valstr = v.getValueString()
+			if valstr == "UNREC_TYPE":
+				self.logErr("Invalid type in flat variable!")
+				return
+
+			# Create variable definition
+			out = out + getTypeSymbol(v.dimension, v.type) + " " + v.name + " " + valstr
+
+			# Add description
+			if len(v.desc) > 0 and show_descriptions:
+				out = out + " ?" + v.desc
+
+			# Carriage return
+			out = out + "\n"
+
+		# Sort matrices if required
+		if sort_mats or vertical_mode:
+			self.sortmatrices()
+
+		################ Horizontal Mode matrices ###
+
+		if not vertical_mode:
+
+			for v in self.vars1D + self.vars2D:
+
+				# Get string for value
+				valstr = v.getValueString()
+				if valstr == "UNREC_TYPE":
+					self.logErr("Invalid type in flat variable!")
+					return
+
+				# Create variable definition
+				out = out + getTypeSymbol(v.dimension, v.type) + " " + v.name + " " + valstr
+
+				# Add description
+				if len(v.desc) > 0 and show_descriptions:
+					out = out + " ?" + v.desc
+
+				# Carriage return
+				out = out + "\n"
+		else:
+			self.logErr("Vertical save not implemented!") #TODO: Implement vertical save!
+
+		return out
+
+
+
+	def sortMatrices(self):
+
+		self.vars1D.sort(key=len)
+
+		self.vars2D.sort(key=len)
 
 	#*************************** ERROR RECORD ********************************#
 
@@ -259,7 +373,7 @@ class DDFIO:
 								self.logErr(f"Failed on line {lnum}. Unrecognized boolian value '{w2}'.");
 								return False
 
-						temp = DFFItem(val, words[1].str)
+						temp = DDFItem(val, words[1].str)
 
 						optional_features_start = 3;
 

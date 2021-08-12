@@ -20,7 +20,7 @@ class StringIdx():
 	def __repr__(self):
 		return self.__str__()
 
-class DFFItem():
+class DDFItem():
 
 	def __init__(self, value, name:str, desc:str=""):
 
@@ -38,6 +38,18 @@ class DFFItem():
 			self.val = td[0]
 			self.dimension = -1
 
+	def __len__(self):
+
+		if self.dimension == FLAT:
+			return 1
+		elif self.dimension == M1D:
+			return len(self.val)
+		else:
+			sum = 0
+			for r in self.val:
+				sum += len(r)
+			return sum
+
 	def __str__(self):
 
 		max_desc_len = 20
@@ -53,6 +65,64 @@ class DFFItem():
 			descstr = f", (\"{descstr}\")"
 
 		return f"<DFFItem({typesym}) {self.name}={self.val}{descstr}>"
+
+	def get1DValueString(self, X):
+
+		if self.type == DOUBLE:
+			return str(X) #TODO: Make the formatting of doubles more intelligent
+		elif self.type == STRING:
+			return "\"" + X + "\""
+		elif self.type == BOOL:
+			if X:
+				return "True"
+			else:
+				return "False"
+		elif self.type == ERR:
+			return "UNREC_TYPE"
+
+	def getValueString(self):
+
+
+		if self.dimension == FLAT:
+			return self.get1DValueString(self.val)
+		elif self.dimension == M1D:
+
+			outstr = "["
+
+			for v in self.val:
+
+				if len(outstr) > 1:
+					outstr = outstr + ", ";
+
+				outstr = outstr + self.get1DValueString(v)
+
+			return outstr + "]"
+
+		elif self.dimension == M2D:
+
+			r = len(self.val)
+			c = len(self.val[0])
+
+			outstr = "["
+
+			for row in range(r): # For each row...
+
+				if len(outstr) > 1:
+					outstr = outstr + "; "
+
+				rowstr = ""
+
+				for col in range(c): # For each column
+
+					if len(rowstr) > 0:
+						rowstr = rowstr + ", ";
+
+					rowstr = rowstr + self.get1DValueString(self.val[row][col])
+
+				outstr = outstr + rowstr
+
+			return outstr + "]"
+
 
 def getType(value):
 

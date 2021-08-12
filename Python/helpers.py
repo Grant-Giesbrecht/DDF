@@ -1,5 +1,5 @@
 from itertools import groupby
-from .ddf_types import *
+from ddf_types import *
 
 # Looks for characters in 'delims' in string 'input'. Supposing the string is to
 # be broken up at each character in 'delims', the function returns a generator
