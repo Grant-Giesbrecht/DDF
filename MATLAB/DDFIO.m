@@ -530,7 +530,7 @@ classdef DDFIO < handle
 				sort_mats = true;
 			end
 			if ~isempty(find(char(options)=='u',1))
-				show_descriptions = true;
+				show_descriptions = false;
 			end
 
 			%Write version statement
