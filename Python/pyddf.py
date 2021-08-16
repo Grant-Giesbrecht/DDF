@@ -406,3 +406,27 @@ class DDFIO:
 								temp.desc = line[desc_start:desc_end]
 
 					self.vars1D.append(temp)
+
+
+
+
+
+def makeValidName(s):
+
+	s = list(s)
+
+	if len(s) < 1:
+		s = "x"
+
+	# For each character
+	for idx in range(len(s)):
+
+		# Replace invalid characters with '_'
+		if not (s[idx].isalnum() or s[idx] == "_"):
+			s[idx] = "_"
+
+	# Check if first character is a number, if so add an 'x' before it
+	if s[0].isnumeric():
+		s = "x" + s;
+
+	return "".join(s)
