@@ -227,7 +227,7 @@ classdef DDFIO < handle
 			end
 
 			%Check that first character is letter
-			if ~isletter(name(1))
+			if ~isletter(name(1)) && name(1) ~= '_'
 				valid=false;
 				return;
 			end
