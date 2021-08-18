@@ -157,7 +157,7 @@ def getTypeSymbol(depth, type):
 		base_sym = 'd'
 	elif type == BOOL:
 		base_sym = 'b'
-	elif base_sym == STRING:
+	elif type == STRING:
 		base_sym = 's'
 	else:
 		return "?"
