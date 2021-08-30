@@ -263,7 +263,8 @@ classdef DDFIO < handle
 
 			if numel(obj.varsFlat) > 0
 				
-				out = strcat(out, string(newline), "Flat Variables:", string(newline));
+				out = strcat(out, string(newline));
+% 				out = strcat(out, string(newline), "Scalar Variables:", string(newline));
 
 				i = 0;
 				flatTable = MTable();
@@ -275,7 +276,8 @@ classdef DDFIO < handle
 					% flatTable.row([limitLength(v.name, nameCap), limitLength(v.type, typeCap), limitLength(v.getValueStr(), valCap), limitLength(string(v.desc), descCap)]);
 
 				end
-				flatTable.alignt('l');
+				flatTable.title("Scalar Variables");
+				flatTable.alignt('c');
 				flatTable.alignah('l');
 				flatTable.alignac('l');
 				flatTable.trimac('c', trim_len);
@@ -284,7 +286,8 @@ classdef DDFIO < handle
 
 	
 			if numel(obj.vars1D) > 0
-				out = strcat(out, string(newline), "1D Variables:", string(newline));
+				out = strcat(out, string(newline));
+% 				out = strcat(out, string(newline), "1D Variables:", string(newline));
 				i = 0;
 				matTable1 = MTable();
 				matTable1.row(["Name", "Type", "Value", "Description"]);
@@ -295,7 +298,8 @@ classdef DDFIO < handle
 					% flatTable.row([limitLength(v.name, nameCap), limitLength(v.type, typeCap), limitLength(v.getValueStr(), valCap), limitLength(string(v.desc), descCap)]);
 
 				end
-				matTable1.alignt('l');
+				matTable1.title("1D Vector Variables");
+				matTable1.alignt('c');
 				matTable1.alignah('l');
 				matTable1.alignac('l');
 				matTable1.trimac('c', trim_len);
@@ -303,7 +307,8 @@ classdef DDFIO < handle
 			end
 
 			if numel(obj.vars2D) > 0
-				out = strcat(out, string(newline), "2D Variables:", string(newline));
+				out = strcat(out, string(newline));
+% 				out = strcat(out, string(newline), "2D Variables:", string(newline));
 				i = 0;
 				matTable2 = MTable();
 				matTable2.row(["Name", "Type", "Value", "Description"]);
@@ -314,7 +319,8 @@ classdef DDFIO < handle
 					% flatTable.row([limitLength(v.name, nameCap), limitLength(v.type, typeCap), limitLength(v.getValueStr(), valCap), limitLength(string(v.desc), descCap)]);
 
 				end
-				matTable2.alignt('l');
+				matTable2.title("2D Vector Variables");
+				matTable2.alignt('c');
 				matTable2.alignah('l');
 				matTable2.alignac('l');
 				matTable2.trimac('c', trim_len);
