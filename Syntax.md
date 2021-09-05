@@ -77,7 +77,7 @@ Inline variable statement examples:
 ```
 d pi 31.41592535e-1;
 s planet "Jupiter" ?Has the best moon
-b wantBeer true
+b wantCoffee true
 m<d> abcd [14, 7;3, 2]
 ```
 

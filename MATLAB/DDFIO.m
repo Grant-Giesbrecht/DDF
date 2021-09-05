@@ -650,7 +650,7 @@ classdef DDFIO < handle
 			else %------------------ END horiz, start vert. mode matrix ---
 				
 				% Print 1D matrices in their own vertical block
-				out = strcat(out, "#VERTICAL", nl);
+				out = strcat(out, nl, "#VERTICAL", nl);
 				
 				if ~optimize
 					out = strcat(out, "//1D Vectors", nl);
@@ -701,6 +701,78 @@ classdef DDFIO < handle
 					% Get data line
 					typestr = "";
 					for v = obj.vars1D
+						if typestr ~= ""
+							typestr = strcat(typestr, " ");
+						end
+						typestr = strcat(typestr, v.getValueStrIdx(elnum));
+					end
+					
+					% Check for all variables out of data
+					if typestr == ""
+						break;
+					end
+					
+					% Increment counter
+					elnum = elnum+1;
+					
+					% Add to output
+					out = strcat(out, typestr, nl);
+				end
+								
+				out = strcat(out, "#VERTICAL", nl);
+				
+				% Print 2D matrices in their own vertical block
+				out = strcat(out, nl, "#VERTICAL", nl);
+				
+				if ~optimize
+					out = strcat(out, "//2D Vectors", nl);
+				end
+				
+				% Get type declaration line
+				typestr = "";
+				for v = obj.vars2D
+					if typestr ~= ""
+						typestr = strcat(typestr, " ");
+					end
+					typestr = strcat(typestr, v.getTypeStr());
+				end
+				out = strcat(out, typestr, nl);
+				
+				% Get name declaration line
+				typestr = "";
+				for v = obj.vars2D
+					if typestr ~= ""
+						typestr = strcat(typestr, " ");
+					end
+					typestr = strcat(typestr, v.name());
+				end
+				out = strcat(out, typestr, nl);
+				
+				% Get description line
+				found_desc = false;
+				typestr = "";
+				if show_descriptions
+					for v = obj.vars2D
+						if typestr ~= ""
+							typestr = strcat(typestr, " ");
+						end
+						typestr = strcat(typestr, "?", v.desc());
+						if v.desc ~= ""
+							found_desc = true;
+						end
+					end
+				end
+				if found_desc
+					out = strcat(out, typestr, nl);
+				end
+				
+				% Print data
+				elnum = 1;
+				while true
+					
+					% Get data line
+					typestr = "";
+					for v = obj.vars2D
 						if typestr ~= ""
 							typestr = strcat(typestr, " ");
 						end
