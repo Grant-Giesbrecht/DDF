@@ -8,6 +8,10 @@ classdef DDFItem < handle
 		count
 		unit
 		isnotfound %When is a returned value that does not exist, is set true, else false
+		
+		valstr % String representing value (calc'd by getValueStr)
+		valstr_components % Array of strings representing elements in valstr
+		valstr_value % Value (obj.val) used to compute valstr/valstr_components. Used to check if need to update valstr
 	end		 % ************* END PROPERTIES *****************
 	
 	methods  % ************* METHODS ************************
@@ -30,6 +34,11 @@ classdef DDFItem < handle
 			else
 				disp('ERROR: Unrecognized type!');
 			end
+			
+			obj.valstr = "[]";
+			obj.valstr_components = "";
+			obj.valstr_components(1) = [];
+			obj.valstr_value = [];
 			
 			%Get number of dimensions
 			
@@ -61,6 +70,47 @@ classdef DDFItem < handle
 		
 		function valstr=getValueStr(obj)
 			
+			% Recalculate value string if needed
+			try
+				if obj.valstr_value ~= obj.val
+					obj.calcValueStr();
+				end
+			catch
+				obj.calcValueStr();
+			end
+			
+			
+			% Return value
+			valstr = obj.valstr;
+			
+		end
+		
+		function valstr=getValueStrIdx(obj, idx)
+			
+			% Recalculate value string if needed
+			try
+				if obj.valstr_value ~= obj.val
+					obj.calcValueStr();
+				end
+			catch
+				obj.calcValueStr();
+			end
+			
+			
+			% Return value
+			if idx <= length(obj.valstr_components) 
+				valstr = obj.valstr_components(idx);
+			else
+				valstr = "";
+			end
+			
+		end
+		
+		function calcValueStr(obj)
+			
+			obj.valstr_components = "";
+			obj.valstr_components(1) = [];
+			
 			if obj.dimension == 2 %If a 1D matrix
 
 				%Start with blank string
@@ -73,7 +123,11 @@ classdef DDFItem < handle
 						valstr = strcat(valstr, ", ");
 					end
 					
-					valstr = strcat(valstr, obj.getElementStr(e));
+					estr = obj.getElementStr(e);
+					
+					obj.valstr_components = addTo(obj.valstr_components, estr);
+					
+					valstr = strcat(valstr, estr);
 				end
 				
 				valstr = strcat("[", valstr, "]");
@@ -93,6 +147,9 @@ classdef DDFItem < handle
 					
 					if matstr ~= ""
 						matstr = strcat(matstr, "; ");
+						
+						obj.valstr_components(end) = strcat(obj.valstr_components(end), ";");
+						
 					end
 					
 					%Create row string same way create 1D array string
@@ -106,8 +163,12 @@ classdef DDFItem < handle
 						if valstr ~= ""
 							valstr = strcat(valstr, ", ");
 						end
+						
+						estr = obj.getElementStr(e);
+						
+						obj.valstr_components = addTo(obj.valstr_components, estr);
 
-						valstr = strcat(valstr, obj.getElementStr(e));
+						valstr = strcat(valstr, estr);
 					end
 					
 					matstr = strcat(matstr, valstr);
@@ -119,7 +180,8 @@ classdef DDFItem < handle
 				valstr = obj.getElementStr(obj.val);
 			end
 			
-			valstr = string(valstr);
+			obj.valstr = string(valstr);
+			obj.valstr_value = obj.val;
 			
 		end
 		
@@ -134,6 +196,8 @@ classdef DDFItem < handle
 			else
 				valstr = "ERROR";
 			end
+			
+			valstr = string(valstr);
 		end
 		
 		function updateCount(obj)
