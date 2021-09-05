@@ -242,13 +242,25 @@ classdef DDFIO < handle
 
 		function sortMatrices(obj) %********* sortMatrices() **************
 
+			for v = obj.vars1D
+				v.updateCount();
+			end
+			
+			for v = obj.vars2D
+				v.updateCount();
+			end
+			
 			%For 1D vectors
-			[~, ind] = sort([obj.vars1D.count]);
-			obj.vars1D = obj.vars1D(ind);
+			if length(obj.vars1D) > 1
+				[~, ind] = sort([obj.vars1D.count], 'descend');
+				obj.vars1D = obj.vars1D(ind);
+			end
 
 			%For 2D vectors
-			[~, ind] = sort([obj.vars2D.count]);
-			obj.vars1D = obj.vars2D(ind);
+			if length(obj.vars2D) > 2
+				[~, ind] = sort([obj.vars2D.count], 'descend');
+				obj.vars2D = obj.vars2D(ind);
+			end
 
 		end %********************** END sortMatrices() ********************
 
@@ -636,7 +648,79 @@ classdef DDFIO < handle
 
 
 			else %------------------ END horiz, start vert. mode matrix ---
-				out = out; %TODO: Print veritcal matrix!
+				
+				% Print 1D matrices in their own vertical block
+				out = strcat(out, "#VERTICAL", nl);
+				
+				if ~optimize
+					out = strcat(out, "//1D Vectors", nl);
+				end
+				
+				% Get type declaration line
+				typestr = "";
+				for v = obj.vars1D
+					if typestr ~= ""
+						typestr = strcat(typestr, " ");
+					end
+					typestr = strcat(typestr, v.getTypeStr());
+				end
+				out = strcat(out, typestr, nl);
+				
+				% Get name declaration line
+				typestr = "";
+				for v = obj.vars1D
+					if typestr ~= ""
+						typestr = strcat(typestr, " ");
+					end
+					typestr = strcat(typestr, v.name());
+				end
+				out = strcat(out, typestr, nl);
+				
+				% Get description line
+				found_desc = false;
+				typestr = "";
+				if show_descriptions
+					for v = obj.vars1D
+						if typestr ~= ""
+							typestr = strcat(typestr, " ");
+						end
+						typestr = strcat(typestr, "?", v.desc());
+						if v.desc ~= ""
+							found_desc = true;
+						end
+					end
+				end
+				if found_desc
+					out = strcat(out, typestr, nl);
+				end
+				
+				% Print data
+				elnum = 1;
+				while true
+					
+					% Get data line
+					typestr = "";
+					for v = obj.vars1D
+						if typestr ~= ""
+							typestr = strcat(typestr, " ");
+						end
+						typestr = strcat(typestr, v.getValueStrIdx(elnum));
+					end
+					
+					% Check for all variables out of data
+					if typestr == ""
+						break;
+					end
+					
+					% Increment counter
+					elnum = elnum+1;
+					
+					% Add to output
+					out = strcat(out, typestr, nl);
+				end
+								
+				out = strcat(out, "#VERTICAL", nl);
+				
 			end %--------------------- END matrix print
 
 			fstr = out;
