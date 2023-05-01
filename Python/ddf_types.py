@@ -63,8 +63,12 @@ class DDFItem():
 			else:
 				descstr = self.desc
 			descstr = f", (\"{descstr}\")"
+			
+		valstr = str(self.val)
+		if len(valstr) > 30:
+			valstr = "[" + str(self.val[0]) + ",... , " + str(self.val[-1]) + "]"
 
-		return f"<DFFItem({typesym}) {self.name}={self.val}{descstr}>"
+		return f"<DFFItem({typesym}) {self.name}={valstr}{descstr}>"
 
 	def get1DValueString(self, X):
 

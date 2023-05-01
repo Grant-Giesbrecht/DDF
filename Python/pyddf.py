@@ -101,7 +101,16 @@ class DDFIO:
 
 	def show(self):
 
+		print("Scalar Varaibles:")
+		for v in self.varsFlat:
+			print(v)
+			
+		print("1D Varaibles:")
 		for v in self.vars1D:
+			print(v)
+		
+		print("2D Varaibles:")
+		for v in self.vars2D:
 			print(v)
 
 	#*********************** WRITE FILE ***************************************#
